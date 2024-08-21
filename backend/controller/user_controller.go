@@ -23,15 +23,19 @@ func NewUserController(userService *service.UserService, oauthCfg *oauth2.Config
 }
 
 func (c *UserController) SetUp(e *echo.Echo) {
+	authGate := gate.Auth(c.userService)
+
 	g := e.Group("/user")
 	g.GET("/auth-code", c.handleAuth)
 	g.POST("/auth-callback", c.handleAuthCallback)
-	g.POST("/logout", c.handleLogout, gate.Auth(c.userService))
-	g.GET("/info", c.handleInfo, gate.Auth(c.userService))
+	g.POST("/logout", c.handleLogout, authGate)
+	g.GET("/info", c.handleInfo, authGate)
 
-	qg := e.Group("/questions", gate.Auth(c.userService))
+	qg := e.Group("/questions", authGate)
 	qg.GET("/", c.handleGetQuestions)
 	qg.POST("/:id/answer", c.handleAnswerQuestion)
+
+	e.POST("/skill-description", c.handleUpdateSkillDescription, authGate)
 }
 
 func (c *UserController) handleAuth(ctx echo.Context) error {
@@ -75,7 +79,7 @@ func (c *UserController) handleAuthCallback(ctx echo.Context) error {
 }
 
 func (c *UserController) handleLogout(ctx echo.Context) error {
-	sess := ctx.Get("session").(*model.Session)
+	sess := Sess(ctx)
 	if err := c.userService.DeleteSession(sess.Id); err != nil {
 		return err
 	}
@@ -83,29 +87,56 @@ func (c *UserController) handleLogout(ctx echo.Context) error {
 }
 
 func (c *UserController) handleInfo(ctx echo.Context) error {
-	sess := ctx.Get("session").(*model.Session)
+	sess := Sess(ctx)
 	user, err := c.userService.FindUserById(sess.UserId)
 	if err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"userId":    sess.UserId,
-		"username":  user.Name,
-		"createdAt": user.CreatedAt,
+		"userId":           sess.UserId,
+		"username":         user.Name,
+		"createdAt":        user.CreatedAt,
+		"skillDescription": user.SkillDescription,
 	})
 }
 
 func (c *UserController) handleGetQuestions(ctx echo.Context) error {
-	questions, err := c.userService.GetInterviewQuestions(ctx.Get("session").(*model.Session).UserId)
+	type questionType struct {
+		Id         int64    `json:"id"`
+		Content    string   `json:"content"`
+		Choices    []string `json:"choices"`
+		UserAnswer *int     `json:"userAnswer"`
+	}
+	type respType struct {
+		Ready     bool           `json:"ready"`
+		Questions []questionType `json:"questions,omitempty"`
+	}
+	questions, err := c.userService.GetInterviewQuestions(Sess(ctx).UserId)
 	if err != nil {
+		if err == service.ErrCreatingInterviewQuestions {
+			return ctx.JSON(http.StatusOK, &respType{Ready: false})
+		}
 		return err
+	}
+	questionList := make([]questionType, 0)
+	for _, q := range questions {
+		choices, err := q.Choices()
+		if err != nil {
+			return err
+		}
+		questionList = append(questionList, questionType{
+			Id:         q.Id,
+			Content:    q.Content,
+			Choices:    choices,
+			UserAnswer: q.UserAnswer,
+		})
 	}
 	return ctx.JSON(http.StatusOK, questions)
 }
 
 func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
 	type answerRequest struct {
-		Answer int `json:"answer" validate:"required"`
+		Answer *int `json:"answer" validate:"required"`
 	}
 	var req answerRequest
 	if err := BindAndValidate(ctx, &req); err != nil {
@@ -117,8 +148,22 @@ func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
 		return err
 	}
 
-	if err := c.userService.AnswerInterviewQuestion(ctx.Get("session").(*model.Session).UserId, int64(questionId), req.Answer); err != nil {
+	if err := c.userService.AnswerInterviewQuestion(ctx.Get("session").(*model.Session).UserId, int64(questionId), *req.Answer); err != nil {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, M("Answered"))
+}
+
+func (c *UserController) handleUpdateSkillDescription(ctx echo.Context) error {
+	type updateSkillDescriptionRequest struct {
+		Description string `json:"description" validate:"max=5000"`
+	}
+	var req updateSkillDescriptionRequest
+	if err := BindAndValidate(ctx, &req); err != nil {
+		return err
+	}
+	if err := c.userService.UpdateSkillDescription(Sess(ctx).UserId, req.Description); err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, M("Updated"))
 }

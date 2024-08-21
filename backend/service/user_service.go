@@ -27,6 +27,10 @@ type UserService struct {
 	llmService *LLMService
 }
 
+var (
+	ErrCreatingInterviewQuestions = errors.New("creating questions")
+)
+
 func NewUserService(log logrus.FieldLogger, userRepository *repository.UserRepository, sessionRepository *repository.SessionRepository, interviewQuestionRepository *repository.InterviewQuestionRepository) *UserService {
 	return &UserService{
 		log:                         log,
@@ -145,9 +149,9 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 			}
 			_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsFinished)
 		}()
-		return nil, &echo.HTTPError{Code: http.StatusAccepted, Message: "Creating questions..."}
+		return nil, ErrCreatingInterviewQuestions
 	case model.InterviewQuestionStatusQuestionsNotReady:
-		return nil, &echo.HTTPError{Code: http.StatusBadRequest, Message: "Questions not ready"}
+		return nil, ErrCreatingInterviewQuestions
 	case model.InterviewQuestionStatusInProgress, model.InterviewQuestionStatusQuestionsFinished:
 		questions, err := s.interviewQuestionRepository.FindAllByUserId(userId)
 		if err != nil {
@@ -191,4 +195,8 @@ func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, an
 		return fmt.Errorf("failed to answer question %d: %w", questionId, err)
 	}
 	return nil
+}
+
+func (s *UserService) UpdateSkillDescription(userId int64, desc string) error {
+	return s.userRepository.SetSkillDescription(userId, desc)
 }

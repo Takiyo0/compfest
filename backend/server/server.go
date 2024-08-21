@@ -61,7 +61,10 @@ func (s *Server) Start() error {
 	sessionRepository := repository.NewSessionRepository(db)
 	interviewQuestionRepository := repository.NewInterviewQuestionRepository(db)
 
+	llmService := service.NewLLMService(s.ai)
+
 	userService := service.NewUserService(s.log, userRepository, sessionRepository, interviewQuestionRepository)
+	userService.SetLLMService(llmService)
 
 	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
 

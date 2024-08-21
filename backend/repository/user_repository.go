@@ -35,3 +35,8 @@ func (r *UserRepository) SetInterviewQuestionStatus(id int64, status string) err
 	_, err := r.db.Exec("UPDATE users SET interviewQuestionStatus = ?, interviewQuestionStatusLastUpdatedAt = ? WHERE id = ?", status, time.Now().Unix(), id)
 	return err
 }
+
+func (r *UserRepository) SetSkillDescription(id int64, desc string) error {
+	_, err := r.db.Exec("UPDATE users SET skillDescription = ? WHERE id = ?", desc, id)
+	return err
+}
