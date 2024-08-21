@@ -117,7 +117,7 @@ interface UserAnswerResponse {
 }
 ```
 
-### `GET` /user/skill-description 
+### `POST` /user/skill-description 
 
 **[Authentication is required]**
 
