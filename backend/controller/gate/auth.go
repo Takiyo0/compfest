@@ -12,7 +12,7 @@ func Auth(userService *service.UserService) echo.MiddlewareFunc {
 			if !valid {
 				return ctx.JSON(401, map[string]string{"message": "Unauthorized"})
 			}
-			sess, err := userService.GetSessionByToken(tokenId + tok)
+			sess, err := userService.GetSessionByToken(tokenId + ":" + tok)
 			if err != nil {
 				return err
 			}

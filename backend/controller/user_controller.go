@@ -10,6 +10,7 @@ import (
 	"github.com/takiyo0/compfest/backend/service"
 	"golang.org/x/oauth2"
 	"net/http"
+	"strconv"
 )
 
 type UserController struct {
@@ -27,6 +28,10 @@ func (c *UserController) SetUp(e *echo.Echo) {
 	g.POST("/auth-callback", c.handleAuthCallback)
 	g.POST("/logout", c.handleLogout, gate.Auth(c.userService))
 	g.GET("/info", c.handleInfo, gate.Auth(c.userService))
+
+	qg := e.Group("/questions", gate.Auth(c.userService))
+	qg.GET("/", c.handleGetQuestions)
+	qg.POST("/:id/answer", c.handleAnswerQuestion)
 }
 
 func (c *UserController) handleAuth(ctx echo.Context) error {
@@ -43,7 +48,7 @@ func (c *UserController) handleAuthCallback(ctx echo.Context) error {
 		Code  string `json:"code" validate:"required"`
 	}
 	var req authCallbackRequest
-	if err := ctx.Bind(&req); err != nil {
+	if err := BindAndValidate(ctx, &req); err != nil {
 		return err
 	}
 	token, err := c.oauthCfg.Exchange(context.Background(), req.Code)
@@ -88,4 +93,32 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 		"username":  user.Name,
 		"createdAt": user.CreatedAt,
 	})
+}
+
+func (c *UserController) handleGetQuestions(ctx echo.Context) error {
+	questions, err := c.userService.GetInterviewQuestions(ctx.Get("session").(*model.Session).UserId)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, questions)
+}
+
+func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
+	type answerRequest struct {
+		Answer int `json:"answer" validate:"required"`
+	}
+	var req answerRequest
+	if err := BindAndValidate(ctx, &req); err != nil {
+		return err
+	}
+
+	questionId, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		return err
+	}
+
+	if err := c.userService.AnswerInterviewQuestion(ctx.Get("session").(*model.Session).UserId, int64(questionId), req.Answer); err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, M("Answered"))
 }

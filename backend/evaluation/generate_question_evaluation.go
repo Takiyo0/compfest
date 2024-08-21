@@ -1,9 +1,8 @@
 package evaluation
 
 import (
-	"context"
 	"errors"
-	"fmt"
+	"github.com/takiyo0/compfest/backend/llm"
 	"github.com/takiyo0/compfest/backend/prompts"
 	"regexp"
 	"strconv"
@@ -18,13 +17,16 @@ func NewGenerateQuestionEvaluation(e Evaluator) *GenerateQuestionEvaluation {
 	return &GenerateQuestionEvaluation{e}
 }
 
-func (e *GenerateQuestionEvaluation) CreateChoiceQuestion(ctx context.Context, topic string) (*Question, error) {
-	result, err := e.e.Prompt(ctx, prompts.Format(prompts.GenerateChoiceQuestionPrompt, map[string]string{"topic": topic}))
+func (e *GenerateQuestionEvaluation) CreateChoiceQuestion(topic string) (*Question, error) {
+	result, err := e.e.Completion("indoprog-q", llm.CompletionOptions{
+		Prompt: prompts.Format(prompts.GenerateChoiceQuestionPrompt, map[string]string{"topic": topic}),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(result)
+	// TODO: do not hardcode this
+	result = "[SOAL]" + result
 
 	reContent := regexp.MustCompile(`\[SOAL\](.*?)\[(?:/SOAL|J1)\]`)
 	reJ1 := regexp.MustCompile(`\[J1\](.*?)\[(?:/J1|J2)\]`)

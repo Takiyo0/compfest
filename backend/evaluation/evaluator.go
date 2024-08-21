@@ -1,7 +1,7 @@
 package evaluation
 
-import "context"
+import "github.com/takiyo0/compfest/backend/llm"
 
 type Evaluator interface {
-	Prompt(ctx context.Context, prompt string) (string, error)
+	Completion(model string, options llm.CompletionOptions) (string, error)
 }

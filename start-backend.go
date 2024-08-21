@@ -14,7 +14,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	srv := server.New(cfg)
+	srv := server.New(log, cfg)
 	if err := srv.Start(); err != nil {
 		panic(err)
 	}

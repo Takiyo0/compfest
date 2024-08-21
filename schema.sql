@@ -3,6 +3,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     interviewQuestionStatus ENUM('NOT_STARTED', 'QUESTIONS_NOT_READY', 'IN_PROGRESS', 'SUCCESS') DEFAULT 'NOT_STARTED' NOT NULL,
     interviewQuestionStatusLastUpdatedAt BIGINT NOT NULL,
+    skillDescription MEDIUMTEXT NOT NULL,
     createdAt BIGINT NOT NULL
 ) ENGINE = InnoDB;
 

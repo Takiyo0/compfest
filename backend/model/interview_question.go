@@ -1,6 +1,8 @@
 package model
 
-import "strings"
+import (
+	"encoding/json"
+)
 
 type InterviewQuestion struct {
 	Id            int64  `db:"id"`
@@ -12,6 +14,10 @@ type InterviewQuestion struct {
 	UserAnswer    *int   `db:"userAnswer"`
 }
 
-func (q *InterviewQuestion) Choices() []string {
-	return strings.Split(q.Choices_, ",")
+func (q *InterviewQuestion) Choices() ([]string, error) {
+	var ret []string
+	if err := json.Unmarshal([]byte(q.Choices_), &ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
 }

@@ -2,18 +2,27 @@ package repository
 
 import (
 	"github.com/jmoiron/sqlx"
+	"github.com/takiyo0/compfest/backend/database"
 	"github.com/takiyo0/compfest/backend/model"
 )
 
-type InterviewQuestionsRepository struct {
+type InterviewQuestionRepository struct {
 	db *sqlx.DB
 }
 
-func NewInterviewQuestionsRepository(db *sqlx.DB) *InterviewQuestionsRepository {
-	return &InterviewQuestionsRepository{db: db}
+func NewInterviewQuestionRepository(db *sqlx.DB) *InterviewQuestionRepository {
+	return &InterviewQuestionRepository{db: db}
 }
 
-func (r *InterviewQuestionsRepository) FindAllByUserId(userId int64) ([]model.InterviewQuestion, error) {
+func (r *InterviewQuestionRepository) FindById(id int64) (*model.InterviewQuestion, error) {
+	var question model.InterviewQuestion
+	if err := r.db.Get(&question, "SELECT * FROM interviewQuestions WHERE id = ?", id); err != nil {
+		return nil, err
+	}
+	return &question, nil
+}
+
+func (r *InterviewQuestionRepository) FindAllByUserId(userId int64) ([]model.InterviewQuestion, error) {
 	var questions []model.InterviewQuestion
 	if err := r.db.Select(&questions, "SELECT * FROM interviewQuestions WHERE userId = ?", userId); err != nil {
 		return nil, err
@@ -21,7 +30,15 @@ func (r *InterviewQuestionsRepository) FindAllByUserId(userId int64) ([]model.In
 	return questions, nil
 }
 
-func (r *InterviewQuestionsRepository) AnswerQuestion(id int64, answerChoice int) error {
+func (r *InterviewQuestionRepository) AnswerQuestion(id int64, answerChoice int) error {
 	_, err := r.db.Exec("UPDATE interviewQuestions SET userAnswer = ? WHERE id = ?", answerChoice, id)
 	return err
+}
+
+func (r *InterviewQuestionRepository) InsertQuestions(questions []model.InterviewQuestion, userId int64) error {
+	values := make([][]interface{}, 0)
+	for _, question := range questions {
+		values = append(values, []interface{}{userId, question.Content, question.Choices_, question.CorrectChoice})
+	}
+	return database.BulkInsert(r.db, "interviewQuestions", []string{"userId", "question", "answerChoices", "correctAnswer"}, values)
 }
