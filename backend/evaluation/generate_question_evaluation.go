@@ -68,7 +68,7 @@ func (e *GenerateQuestionEvaluation) CreateChoiceQuestion(topic string) (*Questi
 	choices := []string{trimWhitespace(j1[1]), trimWhitespace(j2[1]), trimWhitespace(j3[1]), trimWhitespace(j4[1])}
 	parsedAnswer, err := strconv.Atoi(strings.Trim(answer[1], " "))
 	if err != nil {
-		return nil, errors.New("")
+		return nil, errors.New("error parsing answer")
 	}
 
 	return &Question{
