@@ -1,0 +1,8 @@
+### Berikut adalah teks yang berisi tentang kemampuan seseorang yang dibuat oleh-nya:
+
+[KEMAMPUAN]
+{skill}
+[/KEMAMPUAN]
+
+### Menurut teks diatas, saya dapat menyimpulkan bahwa orang ini mengerti tentang:
+
