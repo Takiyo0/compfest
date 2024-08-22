@@ -12,6 +12,8 @@ import (
 	"github.com/takiyo0/compfest/backend/llm"
 	"github.com/takiyo0/compfest/backend/repository"
 	"github.com/takiyo0/compfest/backend/service"
+	"net/http"
+	"strings"
 )
 
 type Server struct {
@@ -36,6 +38,12 @@ func (s *Server) Start() error {
 	})
 
 	s.e = echo.New()
+	s.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     strings.Split(s.cfg.CorsOrigin, ","),
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowCredentials: true,
+		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization, echo.HeaderAccept},
+	}))
 	s.e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogURI:    true,
 		LogStatus: true,

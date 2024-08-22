@@ -14,6 +14,8 @@ type Config struct {
 
 	IndoprogqUrl string `env:"INDOPROGQ_URL"`
 	IndoprogcUrl string `env:"INDOPROGC_URL"`
+
+	CorsOrigin string `env:"CORS_ORIGIN"`
 }
 
 var Global Config
