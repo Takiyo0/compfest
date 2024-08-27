@@ -24,7 +24,7 @@ body {
     /*    rgb(var(--background-end-rgb))*/
     /*  )*/
     /*  rgb(var(--background-start-rgb));*/
-    background: radial-gradient(ellipse at 25% 0, rgb(1, 0, 134) 0%, rgb(3, 0, 111) 10%, rgb(2, 0, 21) 70%);
+    background: radial-gradient(ellipse at 25% 0, rgb(1 0 77) 0%, rgb(3 1 65) 10%, rgb(2, 0, 21) 70%);
     background-position-x: -50%;
 }
 
