@@ -31,15 +31,12 @@ interface AuthResponse {
 }
 ```
 
-### `POST` /user/auth-callback
+### `GET` /user/auth-callback
 Handles the authentication callback. Token must be saved by the client and sent with every request that requires authentication.
 
 Request:
-```ts
-interface AuthCallbackRequest {
-  code: string;
-  state: string;
-}
+```
+/user/auth-callback?code=string&state=string
 ```
 
 Response `200 OK`:
@@ -75,8 +72,12 @@ interface UserInfoResponse {
   username: string;
   createdAt: number;
   skillDescription: string;
+  doneInterview: boolean;
+  interviewQuestionStatus: string;
 }
 ```
+
+Possible values for `interviewQuestionStatus`: `NOT_STARTED`, `IN_PROGRESS`, `QUESTION_NOT_READY`, `SUCCESS`
 
 ### `GET` /user/questions
 

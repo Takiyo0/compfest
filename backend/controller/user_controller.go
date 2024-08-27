@@ -27,7 +27,7 @@ func (c *UserController) SetUp(e *echo.Echo) {
 
 	g := e.Group("/user")
 	g.GET("/auth-code", c.handleAuth)
-	g.POST("/auth-callback", c.handleAuthCallback)
+	g.GET("/auth-callback", c.handleAuthCallback)
 	g.POST("/logout", c.handleLogout, authGate)
 	g.GET("/info", c.handleInfo, authGate)
 
@@ -48,8 +48,8 @@ func (c *UserController) handleAuth(ctx echo.Context) error {
 
 func (c *UserController) handleAuthCallback(ctx echo.Context) error {
 	type authCallbackRequest struct {
-		State string `json:"state" validate:"required"`
-		Code  string `json:"code" validate:"required"`
+		State string `query:"state" validate:"required"`
+		Code  string `query:"code" validate:"required"`
 	}
 	var req authCallbackRequest
 	if err := BindAndValidate(ctx, &req); err != nil {
@@ -93,10 +93,12 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"userId":           sess.UserId,
-		"username":         user.Name,
-		"createdAt":        user.CreatedAt,
-		"skillDescription": user.SkillDescription,
+		"userId":                  sess.UserId,
+		"username":                user.Name,
+		"createdAt":               user.CreatedAt,
+		"skillDescription":        user.SkillDescription,
+		"doneInterview":           user.InterviewQuestionStatus == model.InterviewQuestionStatusQuestionsFinished,
+		"interviewQuestionStatus": user.InterviewQuestionStatus,
 	})
 }
 

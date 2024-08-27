@@ -38,23 +38,14 @@ func (s *Server) Start() error {
 	})
 
 	s.e = echo.New()
+	s.e.Validator = controller.NewCustomValidator()
 	s.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     strings.Split(s.cfg.CorsOrigin, ","),
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 		AllowCredentials: true,
 		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization, echo.HeaderAccept},
 	}))
-	s.e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:    true,
-		LogStatus: true,
-		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-			s.log.WithFields(logrus.Fields{
-				"URI":    values.URI,
-				"status": values.Status,
-			}).Info("request")
-			return nil
-		},
-	}))
+	s.e.Use(middleware.Logger())
 	s.e.Use(middleware.Recover())
 
 	db, err := sqlx.Open("mysql", s.cfg.Database.DSN())

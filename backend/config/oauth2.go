@@ -14,5 +14,10 @@ func (c *Oauth2Config) Parse() *oauth2.Config {
 		ClientSecret: c.ClientSecret,
 		RedirectURL:  c.RedirectURL,
 		Scopes:       []string{"user"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:       "https://github.com/login/oauth/authorize",
+			TokenURL:      "https://github.com/login/oauth/access_token",
+			DeviceAuthURL: "https://github.com/login/device/code",
+		},
 	}
 }

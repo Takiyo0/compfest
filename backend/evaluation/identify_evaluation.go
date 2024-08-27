@@ -22,5 +22,9 @@ func (e *IdentifyEvaluation) IdentifyQuestionTopic(question string) ([]string, e
 		return nil, err
 	}
 
-	return strings.Split(strings.TrimSpace(result), ";;"), nil
+	ret := strings.Split(strings.TrimSpace(result), "||")
+	for i := range ret {
+		ret[i] = strings.TrimSpace(ret[i])
+	}
+	return ret, nil
 }

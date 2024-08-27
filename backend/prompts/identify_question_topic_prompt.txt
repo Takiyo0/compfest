@@ -4,5 +4,6 @@
 {skill}
 [/KEMAMPUAN]
 
-### Menurut teks diatas, saya dapat menyimpulkan bahwa orang ini mengerti tentang:
+### Ringkasan
 
+### Menurut teks diatas, saya dapat menyimpulkan bahwa orang ini mengerti tentang:

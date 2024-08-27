@@ -1,3 +1,4 @@
+-- START: Initial tables
 CREATE TABLE users (
     id BIGINT NOT NULL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -19,6 +20,7 @@ CREATE TABLE sessions (
 CREATE TABLE interviewQuestions (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     userId BIGINT NOT NULL,
+    topic VARCHAR(255) NOT NULL,
     content MEDIUMTEXT NOT NULL,
     choices MEDIUMTEXT NOT NULL,
     correctChoice INT NOT NULL,
@@ -46,3 +48,5 @@ CREATE TABLE skillTreeQuestions (
     createdAt BIGINT NOT NULL,
     FOREIGN KEY (skillTreeId) REFERENCES skillTrees(id)
 ) ENGINE = InnoDB;
+-- END
+-- START: Initial data

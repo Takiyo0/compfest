@@ -114,42 +114,14 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 	}
 	switch user.InterviewQuestionStatus {
 	case model.InterviewQuestionStatusNotStarted:
+		_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusInProgress)
 		go func() {
-			// TODO: sql transaction to keep data consistent
-			if err := s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsNotReady); err != nil {
-				s.log.Errorf("failed to set interview question status: %v", err)
-				return
-			}
-			questions, err := s.llmService.CreateQuestions("Interview Programmer senior C++", 5)
-			if err != nil {
+			if err := s.generateInterviewQuestions(*user); err != nil {
 				_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
-				s.log.Errorf("failed to create questions: %v", err)
-				return
+				s.log.WithError(err).Error("failed to generate interview questions")
 			}
-			mappedQuestions := make([]model.InterviewQuestion, 0)
-			for _, question := range questions {
-				serializedChoices, err := json.Marshal(question.Choices)
-				if err != nil {
-					_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
-					s.log.Errorf("failed to serialize choices: %v", err)
-					return
-				}
-				mappedQuestions = append(mappedQuestions, model.InterviewQuestion{
-					UserId:        userId,
-					Content:       question.Content,
-					Choices_:      string(serializedChoices),
-					CorrectChoice: question.CorrectChoice,
-					CreatedAt:     time.Now().Unix(),
-				})
-			}
-			if err := s.interviewQuestionRepository.InsertQuestions(mappedQuestions, userId); err != nil {
-				_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
-				s.log.Errorf("failed to insert questions: %v", err)
-				return
-			}
-			_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsFinished)
 		}()
-		return nil, ErrCreatingInterviewQuestions
+		return s.GetInterviewQuestions(userId)
 	case model.InterviewQuestionStatusQuestionsNotReady:
 		return nil, ErrCreatingInterviewQuestions
 	case model.InterviewQuestionStatusInProgress, model.InterviewQuestionStatusQuestionsFinished:
@@ -160,6 +132,35 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 		return questions, nil
 	}
 	return nil, errors.New("invalid interview question status")
+}
+
+func (s *UserService) generateInterviewQuestions(user model.User) error {
+	topics := []string{"C++", "Java", "Python", "Go", "JavaScript"} // TODO:
+	mappedQuestions := make([]model.InterviewQuestion, 0)
+	for _, topic := range topics {
+		questions, err := s.llmService.CreateQuestions(topic, 5)
+		if err != nil {
+			return fmt.Errorf("failed to create questions for topic %s: %w", topic, err)
+		}
+		for _, question := range questions {
+			serializedChoices, err := json.Marshal(question.Choices)
+			if err != nil {
+				return fmt.Errorf("failed to serialize choices for question: %w", err)
+			}
+			mappedQuestions = append(mappedQuestions, model.InterviewQuestion{
+				UserId:        user.ID,
+				Topic:         topic,
+				Content:       question.Content,
+				Choices_:      string(serializedChoices),
+				CorrectChoice: question.CorrectChoice,
+				CreatedAt:     time.Now().Unix(),
+			})
+		}
+	}
+	if err := s.interviewQuestionRepository.InsertQuestions(mappedQuestions, user.ID); err != nil {
+		return fmt.Errorf("failed to insert questions: %w", err)
+	}
+	return nil
 }
 
 func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, answer int) error {
