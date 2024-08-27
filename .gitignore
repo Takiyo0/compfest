@@ -2,3 +2,5 @@
 start-backend.exe
 .env
 start-backend
+node_modules
+client/node_modules
