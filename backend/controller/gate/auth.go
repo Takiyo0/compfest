@@ -1,6 +1,7 @@
 package gate
 
 import (
+	"encoding/base64"
 	"github.com/labstack/echo/v4"
 	"github.com/takiyo0/compfest/backend/service"
 )
@@ -17,7 +18,12 @@ func Auth(userService *service.UserService) echo.MiddlewareFunc {
 				return err
 			}
 			if sseAuthQueryReq.Token != "" {
-				sess, err := userService.GetSessionByToken(sseAuthQueryReq.Token)
+				// decode token using base64
+				base64DecodedToken, err := base64.StdEncoding.DecodeString(sseAuthQueryReq.Token)
+				if err != nil {
+					return err
+				}
+				sess, err := userService.GetSessionByToken(string(base64DecodedToken))
 				if err != nil {
 					return err
 				}
