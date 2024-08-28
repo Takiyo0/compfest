@@ -150,8 +150,7 @@ interface CreateChatResponse {
 }
 ```
 
-### `GET` /assistant/chat/:chatId/prompt?prompt=string
-**[Authentication is required]**
+### `GET` /assistant/chat/:chatId/prompt?prompt=string&_sseToken=string
 
 Send a message to the assistant.
 
