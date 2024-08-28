@@ -59,13 +59,18 @@ func (s *Server) Start() error {
 	userRepository := repository.NewUserRepository(db)
 	sessionRepository := repository.NewSessionRepository(db)
 	interviewQuestionRepository := repository.NewInterviewQuestionRepository(db)
+	assistantRepository := repository.NewAssistantRepository(db)
 
 	llmService := service.NewLLMService(s.ai)
 
 	userService := service.NewUserService(s.log, userRepository, sessionRepository, interviewQuestionRepository)
 	userService.SetLLMService(llmService)
 
+	assistantService := service.NewAssistantService(assistantRepository)
+	assistantService.SetLLMService(llmService)
+
 	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
+	s.addController(controller.NewAssistantController(assistantService, userService))
 
 	return s.e.Start(":8085")
 }

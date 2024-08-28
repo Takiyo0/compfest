@@ -5,7 +5,8 @@ CREATE TABLE users (
     interviewQuestionStatus ENUM('NOT_STARTED', 'QUESTIONS_NOT_READY', 'IN_PROGRESS', 'SUCCESS') DEFAULT 'NOT_STARTED' NOT NULL,
     interviewQuestionStatusLastUpdatedAt BIGINT NOT NULL,
     skillDescription MEDIUMTEXT NOT NULL,
-    createdAt BIGINT NOT NULL
+    createdAt BIGINT NOT NULL,
+    topics TEXT NOT NULL
 ) ENGINE = InnoDB;
 
 CREATE TABLE sessions (
@@ -34,6 +35,7 @@ CREATE TABLE skillTrees (
     userId BIGINT NOT NULL,
     content MEDIUMTEXT NOT NULL COMMENT 'json serialized skill tree',
     childSkillTreeIds TEXT NOT NULL COMMENT 'comma separated list of skill tree ids',
+    isQuestionsReady BOOLEAN NOT NULL DEFAULT FALSE,
     links MEDIUMTEXT NOT NULL,
     createdAt BIGINT NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id)
@@ -45,8 +47,28 @@ CREATE TABLE skillTreeQuestions (
     content MEDIUMTEXT NOT NULL,
     choices MEDIUMTEXT NOT NULL,
     correctChoice INT NOT NULL,
+    userAnswer INT NOT NULL,
     createdAt BIGINT NOT NULL,
     FOREIGN KEY (skillTreeId) REFERENCES skillTrees(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE assistantChats (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    userId BIGINT NOT NULL,
+    title TEXT NOT NULL,
+    createdAt BIGINT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE assistantChatMessages (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    assistantChatId BIGINT NOT NULL,
+    role ENUM('USER', 'ASSISTANT') NOT NULL,
+    userId BIGINT NOT NULL,
+    content TEXT NOT NULL,
+    createdAt BIGINT NOT NULL,
+    FOREIGN KEY (assistantChatId) REFERENCES assistantChats(id),
+    FOREIGN KEY (userId) REFERENCES users(id)
 ) ENGINE = InnoDB;
 -- END
 -- START: Initial data

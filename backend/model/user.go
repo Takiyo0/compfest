@@ -1,5 +1,9 @@
 package model
 
+import (
+	"strings"
+)
+
 const (
 	InterviewQuestionStatusNotStarted        = "NOT_STARTED"
 	InterviewQuestionStatusQuestionsNotReady = "QUESTIONS_NOT_READY"
@@ -13,5 +17,11 @@ type User struct {
 	InterviewQuestionStatus              string `db:"interviewQuestionStatus"`
 	InterviewQuestionStatusLastUpdatedAt int64  `db:"interviewQuestionStatusLastUpdatedAt"`
 	SkillDescription                     string `db:"skillDescription"`
-	CreatedAt                            int64  `db:"createdAt"`
+	// Topics_ is a || separated string
+	Topics_   string `db:"topics"`
+	CreatedAt int64  `db:"createdAt"`
+}
+
+func (m User) Topics() []string {
+	return strings.Split(m.Topics_, "||")
 }

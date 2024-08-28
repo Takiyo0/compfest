@@ -4,6 +4,7 @@ import (
 	"github.com/google/go-github/v50/github"
 	"github.com/jmoiron/sqlx"
 	"github.com/takiyo0/compfest/backend/model"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 }
 
 func (r *UserRepository) Register(ghUser *github.User) (int64, error) {
-	insert, err := r.db.Exec("INSERT INTO users (id, name, skillDescription, interviewQuestionStatusLastUpdatedAt, createdAt) VALUES (?, ?, ?, ?, ?)", ghUser.GetID(), ghUser.GetName(), "", time.Now().Unix(), time.Now().Unix())
+	insert, err := r.db.Exec("INSERT INTO users (id, name, skillDescription, interviewQuestionStatusLastUpdatedAt, createdAt, topics) VALUES (?, ?, ?, ?, ?, ?)", ghUser.GetID(), ghUser.GetName(), "", time.Now().Unix(), time.Now().Unix(), "")
 	if err != nil {
 		return 0, err
 	}
@@ -38,5 +39,10 @@ func (r *UserRepository) SetInterviewQuestionStatus(id int64, status string) err
 
 func (r *UserRepository) SetSkillDescription(id int64, desc string) error {
 	_, err := r.db.Exec("UPDATE users SET skillDescription = ? WHERE id = ?", desc, id)
+	return err
+}
+
+func (r *UserRepository) SetTopics(id int64, topics []string) error {
+	_, err := r.db.Exec("UPDATE users SET topics = ? WHERE id = ?", strings.Join(topics, "||"), id)
 	return err
 }

@@ -31,7 +31,7 @@ func (c *UserController) SetUp(e *echo.Echo) {
 	g.POST("/logout", c.handleLogout, authGate)
 	g.GET("/info", c.handleInfo, authGate)
 
-	qg := e.Group("/questions", authGate)
+	qg := g.Group("/questions", authGate)
 	qg.GET("/", c.handleGetQuestions)
 	qg.POST("/:id/answer", c.handleAnswerQuestion)
 

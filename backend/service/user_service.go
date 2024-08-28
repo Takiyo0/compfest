@@ -135,7 +135,7 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 }
 
 func (s *UserService) generateInterviewQuestions(user model.User) error {
-	topics := []string{"C++", "Java", "Python", "Go", "JavaScript"} // TODO:
+	topics := user.Topics()
 	mappedQuestions := make([]model.InterviewQuestion, 0)
 	for _, topic := range topics {
 		questions, err := s.llmService.CreateQuestions(topic, 5)

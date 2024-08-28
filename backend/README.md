@@ -137,3 +137,42 @@ interface SkillDescriptionResponse {
   message: string;
 }
 ```
+
+### `POST` /assistant/chat
+**[Authentication is required]**
+
+Create a new chat conversation with the assistant.
+
+Response:
+```
+interface CreateChatResponse {
+  chatId: number;
+}
+```
+
+### `POST` /assistant/chat/:chatId/
+**[Authentication is required]**
+
+Send a message to the assistant.
+
+Request:
+```
+interface SendMessageRequest {
+  prompt: string;
+}
+```
+
+Response:
+```
+data: {"content": "string"}
+
+data: {"content": "string"}
+
+data: {"content": "string"}
+
+data: {"content": "string"}
+
+...
+```
+
+Response is a stream of messages from the assistant. Each message is a JSON object with a `content` field. Each message is separated by a double newline character. This method is also used by ChatGPT to send messages to the user.

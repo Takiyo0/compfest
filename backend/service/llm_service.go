@@ -25,3 +25,26 @@ func (s *LLMService) CreateQuestions(topic string, len int) ([]evaluation.Questi
 	}
 	return questions, nil
 }
+
+type LLMChat struct {
+	IsAssistant bool
+	Content     string
+}
+
+func (s *LLMService) Chat(chats []LLMChat, onGenerate func(string) error) (string, error) {
+	prompt := "Anda adalah asisten berguna yang membantu user dalam menyelesaikan tugas. Mohon lanjutkan percakapan anda berikut:\n\n"
+	for _, chat := range chats {
+		prompt += "<<<"
+		if chat.IsAssistant {
+			prompt += "Asisten"
+		} else {
+			prompt += "User"
+		}
+		prompt += ">>> " + chat.Content + "\n\n"
+	}
+	prompt += "<<<Asisten>>>"
+	return s.llm.CompletionStream(llm.IndoprogC, llm.CompletionOptions{
+		Prompt: prompt,
+		Stop:   []string{"<<<User>>>", "<<<Asisten>>>"},
+	}, onGenerate)
+}
