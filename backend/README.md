@@ -176,3 +176,33 @@ data: {"content": "string"}
 ```
 
 Response is a stream of messages from the assistant. Each message is a JSON object with a `content` field. Each message is separated by a double newline character. This method is also used by ChatGPT to send messages to the user.
+
+### `GET` /assistant/chat/:chatId/
+**[Authentication is required]**
+
+Get all messages in a chat conversation.
+
+Response:
+```ts
+// array of ChatMessage
+interface ChatMessage {
+  id: number;
+  role: 'ASSISTANT' | 'USER';
+  content: string;
+  createdAt: number;
+}
+```
+
+### `GET` /assistant/chat/
+**[Authentication is required]**
+
+Get all chat conversations.
+
+Response:
+```ts
+// array of ChatConversation
+interface ChatConversation {
+  id: number;
+  title: string;
+}
+```

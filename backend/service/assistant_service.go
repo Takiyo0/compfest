@@ -93,3 +93,20 @@ func (s *AssistantService) Chat(userId int64, assistantChatId int64, prompt stri
 
 	return content, nil
 }
+
+func (s *AssistantService) GetChatMessages(userId int64, assistantChatId int64) ([]model.AssistantChatMessage, error) {
+	chat, err := s.assistantRepository.FindById(assistantChatId)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.UserId != userId {
+		return nil, &echo.HTTPError{Code: 403, Message: "You are not allowed to view this chat"}
+	}
+
+	return s.assistantRepository.FindMessages(assistantChatId)
+}
+
+func (s *AssistantService) GetChats(userId int64) ([]model.AssistantChat, error) {
+	return s.assistantRepository.FindByUserId(userId)
+}
