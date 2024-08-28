@@ -25,8 +25,8 @@ func (c *AssistantController) SetUp(e *echo.Echo) {
 	cg := g.Group("/chat")
 	cg.GET("/", c.handleChatHistory)
 	cg.POST("/", c.handleCreateChat)
-	cg.POST("/:id/", c.handleChat)
-	cg.GET("/:id/", c.handleChatMessages)
+	cg.GET("/:id/prompt", c.handlePrompt)
+	cg.GET("/:id/messages", c.handleChatMessages)
 }
 
 func (c *AssistantController) handleChatHistory(ctx echo.Context) error {
@@ -48,9 +48,9 @@ func (c *AssistantController) handleChatHistory(ctx echo.Context) error {
 	return ctx.JSON(200, resp)
 }
 
-func (c *AssistantController) handleChat(ctx echo.Context) error {
+func (c *AssistantController) handlePrompt(ctx echo.Context) error {
 	type chatRequest struct {
-		Prompt string `json:"prompt" validate:"required"`
+		Prompt string `query:"prompt" validate:"required"`
 		ChatId int64  `param:"id" validate:"required"`
 	}
 	var req chatRequest

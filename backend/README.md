@@ -150,17 +150,10 @@ interface CreateChatResponse {
 }
 ```
 
-### `POST` /assistant/chat/:chatId/
+### `GET` /assistant/chat/:chatId/prompt?prompt=string
 **[Authentication is required]**
 
 Send a message to the assistant.
-
-Request:
-```
-interface SendMessageRequest {
-  prompt: string;
-}
-```
 
 Response:
 ```
@@ -177,7 +170,7 @@ data: {"content": "string"}
 
 Response is a stream of messages from the assistant. Each message is a JSON object with a `content` field. Each message is separated by a double newline character. This method is also used by ChatGPT to send messages to the user.
 
-### `GET` /assistant/chat/:chatId/
+### `GET` /assistant/chat/:chatId/messages
 **[Authentication is required]**
 
 Get all messages in a chat conversation.
