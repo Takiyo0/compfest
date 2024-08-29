@@ -24,9 +24,12 @@ RUN chmod +x start-backend
 FROM ubuntu:20.04
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends ca-certificates
-COPY --from=0 /backend-build/compfest/start-backend /usr/bin/start-backend
+RUN mkdir -p /backend
+WORKDIR /backend
+COPY --from=0 /backend-build/compfest/start-backend /backend/start-backend
+RUN chmod +x /backend/start-backend
 
 EXPOSE 8085
 
-CMD ["start-backend"]
+CMD ["/backend/start-backend"]
 
