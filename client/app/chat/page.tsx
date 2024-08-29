@@ -15,5 +15,5 @@ export default async function Page() {
     console.log(userInfo);
 
 
-    return <Chat/>
+    return <Chat userInfo={userInfo}/>
 }
