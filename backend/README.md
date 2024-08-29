@@ -73,11 +73,9 @@ interface UserInfoResponse {
   createdAt: number;
   skillDescription: string;
   doneInterview: boolean;
-  interviewQuestionStatus: string;
+  interviewQuestionStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'QUESTION_NOT_READY' | 'SUCCESS';
 }
 ```
-
-Possible values for `interviewQuestionStatus`: `NOT_STARTED`, `IN_PROGRESS`, `QUESTION_NOT_READY`, `SUCCESS`
 
 ### `GET` /user/questions
 
