@@ -4,6 +4,7 @@ go 1.22.3
 
 require (
 	github.com/caarlos0/env/v11 v11.2.2
+	github.com/go-playground/validator/v10 v10.22.0
 	github.com/go-resty/resty/v2 v2.14.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/go-github/v50 v50.2.0
@@ -21,7 +22,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.22.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
