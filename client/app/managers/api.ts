@@ -1,76 +1,91 @@
-import axios from "axios";
+import axios, {AxiosRequestConfig, AxiosResponse} from "axios";
 import CryptoJS from "crypto-js";
+import {opt} from "ts-interface-checker";
 
 export class ApiManager {
-    public static BaseUrl = "https://367c-180-244-132-226.ngrok-free.app";
+    public static BaseUrl = "https://f009-180-244-132-226.ngrok-free.app";
     public static encryptionKey = "bad7a50445665cb529f402ad7e78650cd9877725b8499e3597c6125e89f32766";
 
-    public static async getUser(token: string): Promise<UserInfoResponse> {
-        try {
-            const response = await axios.get(`${this.BaseUrl}/user/info`, {
-                headers: {
-                    Authorization: `Basic ${ApiManager.Decrypt(token)}`
-                }
-            });
-
-            return {
-                statusCode: response.status,
-                statusText: response.statusText,
-                data: response.data
-            }
-        } catch (e) {
-            return {
-                statusCode: 500,
-                statusText: "Internal Server Error",
-                data: {} as any
-            }
-        }
+    public static async getUser(signal: AbortSignal, token: string): Promise<UserInfoResponse> {
+        return this.Get<UserInfoResponse>('user/info', signal, token);
     }
 
     public static async GetChatTopics(signal: AbortSignal, token: string): Promise<ChatTopicResponse> {
+        return this.Get<ChatTopicResponse>('assistant/chat/', signal, token);
+    }
+
+    public static async CreateChatTopic(signal: AbortSignal, token: string): Promise<NewChatTopicResponse> {
+        return this.Post<NewChatTopicResponse>('assistant/chat/', signal, token);
+    }
+
+    public static async GetChatMessages(signal: AbortSignal, token: string, id: number): Promise<ChatMessagesResponse> {
+        return this.Get<ChatMessagesResponse>(`assistant/chat/${id}/messages`, signal, token);
+    }
+
+    private static async Post<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
         try {
-            const response = await axios.get(`${this.BaseUrl}/assistant/chat/`, {
+            let selfOptions: AxiosRequestConfig = {
                 headers: {
                     Authorization: `Basic ${ApiManager.Decrypt(token)}`
                 },
+                method: "POST",
                 signal
-            });
+            }
+
+            if (options) selfOptions = {...selfOptions, ...options};
+            const response: AxiosResponse<T["data"]> = await axios(`${this.BaseUrl}/${path}`, selfOptions);
 
             return {
                 statusCode: response.status,
                 statusText: response.statusText,
                 data: response.data
-            }
-        } catch (e) {
+            } as T;
+        } catch (e: any) {
+            if (e.name === 'AbortError') return {
+                statusCode: 69,
+                statusText: "Got Aborted RIP",
+                data: {}
+            } as T;
+
             return {
                 statusCode: 500,
                 statusText: "Internal Server Error",
-                data: []
-            }
+                data: {}
+            } as T;
         }
     }
 
-
-    public static async GetChatMessages(signal: AbortSignal, token: string, id: number): Promise<ChatMessagesResponse> {
+    private static async Get<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
         try {
-            const response = await axios.get(`${this.BaseUrl}/assistant/chat/${id}/messages`, {
+            let selfOptions: AxiosRequestConfig = {
                 headers: {
                     Authorization: `Basic ${ApiManager.Decrypt(token)}`
                 },
-                signal
-            });
+                signal,
+                ...options  // Merge any additional options like params for query strings
+            };
+
+            const response: AxiosResponse<T["data"]> = await axios.get(`${this.BaseUrl}/${path}`, selfOptions);
 
             return {
                 statusCode: response.status,
                 statusText: response.statusText,
                 data: response.data
+            } as T;
+        } catch (e: any) {
+            if (e.name === 'CanceledError') {
+                return {
+                    statusCode: 69, // Custom status code for aborted requests
+                    statusText: "Got Aborted RIP",
+                    data: {} as T["data"]  // Empty data
+                } as T;
             }
-        } catch (e) {
+
             return {
                 statusCode: 500,
                 statusText: "Internal Server Error",
-                data: []
-            }
+                data: {} as T["data"]
+            } as T;
         }
     }
 
@@ -97,29 +112,37 @@ export class ApiManager {
     }
 }
 
-interface BaseApiResponse {
+export interface BaseApiResponse {
     statusCode: number;
     statusText: string;
     data: any;
 }
 
-interface UserInfoResponse extends BaseApiResponse {
+export interface UserInfoResponse extends BaseApiResponse {
     data: {
         userId: number;
         username: string;
         createdAt: number;
         skillDescription: string;
+        doneInterview: boolean;
+        interviewQuestionStatus: string;
     }
 }
 
-interface ChatTopicResponse extends BaseApiResponse {
+export interface ChatTopicResponse extends BaseApiResponse {
     data: {
         id: number;
         title: string;
     }[]
 }
 
-interface ChatMessagesResponse extends BaseApiResponse {
+export interface NewChatTopicResponse extends BaseApiResponse {
+    data: {
+        chatId: number;
+    }
+}
+
+export interface ChatMessagesResponse extends BaseApiResponse {
     data: {
         id: number;
         role: 'ASSISTANT' | 'USER';
