@@ -63,7 +63,7 @@ func (s *LLMService) GetChatTitle(chats []LLMChat) (string, error) {
 	prompt += "<<<Ringkasan>>> Dari percakapan diatas, kami menyimpulkan judul dari percakapan dengan maksimal 15 kata yaitu: "
 	return s.llm.Completion(llm.IndoprogC, llm.CompletionOptions{
 		Prompt:   prompt,
-		NPredict: 86,
+		NPredict: 64,
 		Stop:     []string{"<<<Ringkasan>>>", "<<<Asisten>>>", "<<<User>>>"},
 	})
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/repository"
 	"strings"
@@ -9,12 +10,13 @@ import (
 )
 
 type AssistantService struct {
+	log                 logrus.FieldLogger
 	llm                 *LLMService
 	assistantRepository *repository.AssistantRepository
 }
 
-func NewAssistantService(assistantRepository *repository.AssistantRepository) *AssistantService {
-	return &AssistantService{assistantRepository: assistantRepository}
+func NewAssistantService(log logrus.FieldLogger, assistantRepository *repository.AssistantRepository) *AssistantService {
+	return &AssistantService{log: log, assistantRepository: assistantRepository}
 }
 
 func (s *AssistantService) SetLLMService(llm *LLMService) {
@@ -97,14 +99,16 @@ func (s *AssistantService) Chat(userId int64, assistantChatId int64, prompt stri
 		Content:     content,
 	})
 
-	title, err := s.llm.GetChatTitle(llmChats)
-	if err != nil {
-		return "", err
-	}
+	go func() {
+		title, err := s.llm.GetChatTitle(llmChats)
+		if err != nil {
+			s.log.WithError(err).Error("failed to get chat title")
+		}
 
-	if err := s.assistantRepository.SetChatTitle(assistantChatId, strings.Trim(title, "\n")); err != nil {
-		return "", err
-	}
+		if err := s.assistantRepository.SetChatTitle(assistantChatId, strings.Trim(title, "\n")); err != nil {
+			s.log.WithError(err).Error("failed to set chat title")
+		}
+	}()
 
 	return content, nil
 }

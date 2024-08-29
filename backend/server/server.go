@@ -66,7 +66,7 @@ func (s *Server) Start() error {
 	userService := service.NewUserService(s.log, userRepository, sessionRepository, interviewQuestionRepository)
 	userService.SetLLMService(llmService)
 
-	assistantService := service.NewAssistantService(assistantRepository)
+	assistantService := service.NewAssistantService(s.log, assistantRepository)
 	assistantService.SetLLMService(llmService)
 
 	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
