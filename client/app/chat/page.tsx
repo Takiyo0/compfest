@@ -11,7 +11,9 @@ export default async function Page() {
     const testCookies = getCookies({cookies});
     console.log(testCookies);
 
-    const userInfo = await ApiManager.getUser("testing");
+    const abortion = new AbortController();
+
+    const userInfo = await ApiManager.getUser(abortion.signal, "testing");
     console.log(userInfo);
 
 
