@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
+	"os"
 )
 
 type Config struct {
@@ -21,6 +22,10 @@ type Config struct {
 var Global Config
 
 func Load() (Config, error) {
+	if _, err := os.Stat(".env"); os.IsNotExist(err) {
+		_ = os.WriteFile(".env", []byte("IS_PRODUCTION=false\n"), 0644)
+	}
+
 	if err := godotenv.Load(); err != nil {
 		return Config{}, fmt.Errorf("failed to load .env file: %w", err)
 	}
