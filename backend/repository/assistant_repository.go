@@ -57,3 +57,8 @@ func (r *AssistantRepository) SetMessageContent(messageId int64, content string)
 	_, err := r.db.Exec("UPDATE assistantChatMessages SET content = ? WHERE id = ?", content, messageId)
 	return err
 }
+
+func (r *AssistantRepository) SetChatTitle(chatId int64, title string) error {
+	_, err := r.db.Exec("UPDATE assistantChats SET title = ? WHERE id = ?", title, chatId)
+	return err
+}

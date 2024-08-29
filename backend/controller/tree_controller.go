@@ -11,8 +11,8 @@ type SkillTreeController struct {
 	skillTreeService *service.SkillTreeService
 }
 
-func NewSkillTreeController(userService *service.UserService) *SkillTreeController {
-	return &SkillTreeController{userService: userService}
+func NewSkillTreeController(userService *service.UserService, skillTreeService *service.SkillTreeService) *SkillTreeController {
+	return &SkillTreeController{userService: userService, skillTreeService: skillTreeService}
 }
 
 func (c *SkillTreeController) SetUp(e *echo.Echo) {

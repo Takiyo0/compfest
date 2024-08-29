@@ -38,7 +38,7 @@ func (c *AssistantController) handleChatHistory(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	var resp []chatHistoryResponse
+	resp := make([]chatHistoryResponse, 0)
 	for _, chat := range assistantChats {
 		resp = append(resp, chatHistoryResponse{
 			Id:    chat.Id,
@@ -79,6 +79,11 @@ func (c *AssistantController) handlePrompt(ctx echo.Context) error {
 		return err
 	}
 
+	if _, err := ctx.Response().Write([]byte("data: {\"content\": \"\", \"stop\": true}\n\n")); err != nil {
+		return err
+	}
+	ctx.Response().Flush()
+
 	return nil
 }
 
@@ -112,7 +117,7 @@ func (c *AssistantController) handleChatMessages(ctx echo.Context) error {
 		CreatedAt int64  `json:"created_at"`
 	}
 
-	var resp []chatMessageResponse
+	resp := make([]chatMessageResponse, 0)
 	for _, message := range messages {
 		resp = append(resp, chatMessageResponse{
 			Id:        message.Id,

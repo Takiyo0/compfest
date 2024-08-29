@@ -48,3 +48,22 @@ func (s *LLMService) Chat(chats []LLMChat, onGenerate func(string) error) (strin
 		Stop:   []string{"<<<User>>>", "<<<Asisten>>>"},
 	}, onGenerate)
 }
+
+func (s *LLMService) GetChatTitle(chats []LLMChat) (string, error) {
+	prompt := "Mohon berikan judul dari percakapan dibawah ini maksimal 15 kata:\n\n"
+	for _, chat := range chats {
+		prompt += "<<<"
+		if chat.IsAssistant {
+			prompt += "Asisten"
+		} else {
+			prompt += "User"
+		}
+		prompt += ">>> " + chat.Content + "\n\n"
+	}
+	prompt += "<<<Ringkasan>>> Dari percakapan diatas, kami menyimpulkan judul dari percakapan dengan maksimal 15 kata yaitu: "
+	return s.llm.Completion(llm.IndoprogC, llm.CompletionOptions{
+		Prompt:   prompt,
+		NPredict: 86,
+		Stop:     []string{"<<<Ringkasan>>>", "<<<Asisten>>>", "<<<User>>>"},
+	})
+}

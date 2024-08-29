@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/repository"
+	"strings"
 	"time"
 )
 
@@ -88,6 +89,20 @@ func (s *AssistantService) Chat(userId int64, assistantChatId int64, prompt stri
 
 	content, err := s.llm.Chat(llmChats, onGenerateHandler)
 	if err != nil {
+		return "", err
+	}
+
+	llmChats = append(llmChats, LLMChat{
+		IsAssistant: true,
+		Content:     content,
+	})
+
+	title, err := s.llm.GetChatTitle(llmChats)
+	if err != nil {
+		return "", err
+	}
+
+	if err := s.assistantRepository.SetChatTitle(assistantChatId, strings.Trim(title, "\n")); err != nil {
 		return "", err
 	}
 
