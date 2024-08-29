@@ -99,3 +99,19 @@ div#wave .dot:nth-child(3) {
         transform: translateY(-15px);
     }
 }
+
+.gradient-user-1 {
+    background: radial-gradient(
+            circle at 0 0,
+            #5555e0 0%, /* Base color */ #5555d2 25%, /* Lighter shade */ #6b6be1 50%, /* Medium shade */ #6e6eda 75%, /* Lighter shade */ #9d9dd8 100% /* Lightest shade */
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    font-size: 2.8rem;
+}
+
+.menu::-webkit-scrollbar {
+    width: 2px;
+}
