@@ -1,10 +1,15 @@
 import Challenge from "@/app/challenge/challenge";
-import {getCookies} from "cookies-next";
+import {getCookies, getCookie} from "cookies-next";
 import {cookies} from "next/headers";
+import {ApiManager} from "@/app/managers/api";
 
-export default function ChallengePage() {
-    const testCookies = getCookies({cookies});
-    console.log(testCookies);
+export default async function ChallengePage() {
+    const authorization = getCookie("Authorization", {cookies});
 
-    return <Challenge/>
+    const abort = new AbortController();
+
+    console.log("parent challenge called")
+
+    const user = await ApiManager.getUser(abort.signal, authorization ?? "");
+    return <Challenge userData={user.data}/>;
 }
