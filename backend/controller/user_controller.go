@@ -133,7 +133,7 @@ func (c *UserController) handleGetQuestions(ctx echo.Context) error {
 			UserAnswer: q.UserAnswer,
 		})
 	}
-	return ctx.JSON(http.StatusOK, questions)
+	return ctx.JSON(http.StatusOK, &respType{Ready: true, Questions: questionList})
 }
 
 func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
