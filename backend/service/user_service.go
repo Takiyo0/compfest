@@ -205,3 +205,7 @@ func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, an
 func (s *UserService) UpdateSkillDescription(userId int64, desc string) error {
 	return s.userRepository.SetSkillDescription(userId, desc)
 }
+
+func (s *UserService) UpdateSkillInfo(userId int64, skillInfo model.SkillInfo) error {
+	return s.userRepository.SetSkillInfo(userId, skillInfo)
+}

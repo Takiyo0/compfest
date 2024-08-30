@@ -5,6 +5,7 @@ CREATE TABLE users (
     interviewQuestionStatus ENUM('NOT_STARTED', 'QUESTIONS_NOT_READY', 'IN_PROGRESS', 'SUCCESS') DEFAULT 'NOT_STARTED' NOT NULL,
     interviewQuestionStatusLastUpdatedAt BIGINT NOT NULL,
     skillDescription MEDIUMTEXT NOT NULL,
+    skillInfo MEDIUMTEXT,
     createdAt BIGINT NOT NULL,
     topics TEXT NOT NULL
 ) ENGINE = InnoDB;

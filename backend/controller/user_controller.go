@@ -35,7 +35,8 @@ func (c *UserController) SetUp(e *echo.Echo) {
 	qg.GET("/", c.handleGetQuestions)
 	qg.POST("/:id/answer", c.handleAnswerQuestion)
 
-	e.POST("/skill-description", c.handleUpdateSkillDescription, authGate)
+	g.POST("/skill-description", c.handleUpdateSkillDescription, authGate)
+	g.POST("/skill-info", c.handleUpdateSkillInfo, authGate)
 }
 
 func (c *UserController) handleAuth(ctx echo.Context) error {
@@ -92,6 +93,10 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	skillInfo, err := user.SkillInfo()
+	if err != nil {
+		return err
+	}
 	return ctx.JSON(http.StatusOK, map[string]any{
 		"userId":                  sess.UserId,
 		"username":                user.Name,
@@ -99,6 +104,7 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 		"skillDescription":        user.SkillDescription,
 		"doneInterview":           user.InterviewQuestionStatus == model.InterviewQuestionStatusQuestionsFinished,
 		"interviewQuestionStatus": user.InterviewQuestionStatus,
+		"skillInfo":               skillInfo,
 	})
 }
 
@@ -167,5 +173,18 @@ func (c *UserController) handleUpdateSkillDescription(ctx echo.Context) error {
 	if err := c.userService.UpdateSkillDescription(Sess(ctx).UserId, req.Description); err != nil {
 		return err
 	}
+	return ctx.JSON(http.StatusOK, M("Updated"))
+}
+
+func (c *UserController) handleUpdateSkillInfo(ctx echo.Context) error {
+	var req model.SkillInfo
+	if err := BindAndValidate(ctx, &req); err != nil {
+		return err
+	}
+
+	if err := c.userService.UpdateSkillInfo(Sess(ctx).UserId, req); err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusOK, M("Updated"))
 }

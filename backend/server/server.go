@@ -61,7 +61,7 @@ func (s *Server) Start() error {
 	interviewQuestionRepository := repository.NewInterviewQuestionRepository(db)
 	assistantRepository := repository.NewAssistantRepository(db)
 
-	llmService := service.NewLLMService(s.ai)
+	llmService := service.NewLLMService(s.log, s.ai)
 
 	userService := service.NewUserService(s.log, userRepository, sessionRepository, interviewQuestionRepository)
 	userService.SetLLMService(llmService)

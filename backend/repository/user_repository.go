@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"github.com/google/go-github/v50/github"
 	"github.com/jmoiron/sqlx"
 	"github.com/takiyo0/compfest/backend/model"
@@ -44,5 +45,14 @@ func (r *UserRepository) SetSkillDescription(id int64, desc string) error {
 
 func (r *UserRepository) SetTopics(id int64, topics []string) error {
 	_, err := r.db.Exec("UPDATE users SET topics = ? WHERE id = ?", strings.Join(topics, "||"), id)
+	return err
+}
+
+func (r *UserRepository) SetSkillInfo(id int64, skillInfo model.SkillInfo) error {
+	skillInfoStr, err := json.Marshal(skillInfo)
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Exec("UPDATE users SET skillInfo = ? WHERE id = ?", string(skillInfoStr), id)
 	return err
 }
