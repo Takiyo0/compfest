@@ -26,6 +26,7 @@ CREATE TABLE interviewQuestions (
     choices MEDIUMTEXT NOT NULL,
     correctChoice INT NOT NULL,
     createdAt BIGINT NOT NULL,
+    explanation TEXT NOT NULL,
     userAnswer INT,
     FOREIGN KEY (userId) REFERENCES users(id)
 ) ENGINE = InnoDB;
@@ -70,5 +71,6 @@ CREATE TABLE assistantChatMessages (
     FOREIGN KEY (assistantChatId) REFERENCES assistantChats(id),
     FOREIGN KEY (userId) REFERENCES users(id)
 ) ENGINE = InnoDB;
+
 -- END
 -- START: Initial data
