@@ -74,6 +74,7 @@ interface UserInfoResponse {
   skillDescription: string;
   doneInterview: boolean;
   interviewQuestionStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'QUESTION_NOT_READY' | 'SUCCESS';
+  skillInfo: SkillInfo; // see `POST` /user/skill-info
 }
 ```
 
@@ -136,13 +137,46 @@ interface SkillDescriptionResponse {
 }
 ```
 
+### `POST` /user/skill-info
+**[Authentication is required]**
+
+Updates the user's skill info.
+
+Request:
+```ts
+interface SkillInfo {
+    knownLanguages: string[];
+    algoDSComfort: number;
+    algoExp: boolean;
+    useGit: boolean;
+    doCodingChalls: boolean;
+    knownFw: string[];
+    feExp: boolean;
+    beExp: boolean;
+    fsProficiency: number;
+    knownDB: string[];
+    testingExp: boolean;
+    debugFamiliarity: number;
+    teamWorkExp: boolean;
+    cloudFamiliarity: number;
+    techUpdates: boolean;
+}
+```
+
+Response `200 OK`:
+```ts
+interface SkillInfoUpdateResponse {
+  message: string;
+}
+```
+
 ### `POST` /assistant/chat
 **[Authentication is required]**
 
 Create a new chat conversation with the assistant.
 
 Response:
-```
+```ts
 interface CreateChatResponse {
   chatId: number;
 }

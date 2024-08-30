@@ -48,11 +48,11 @@ func (r *UserRepository) SetTopics(id int64, topics []string) error {
 	return err
 }
 
-func (r *UserRepository) SetSkillInfo(id int64, skillInfo model.SkillInfo) error {
+func (r *UserRepository) SetSkillInfo(id int64, skillInfo model.SkillInfo, setFilled bool) error {
 	skillInfoStr, err := json.Marshal(skillInfo)
 	if err != nil {
 		return err
 	}
-	_, err = r.db.Exec("UPDATE users SET skillInfo = ? WHERE id = ?", string(skillInfoStr), id)
+	_, err = r.db.Exec("UPDATE users SET skillInfo = ?, filledSkillInfo = ?  WHERE id = ?", string(skillInfoStr), setFilled, id)
 	return err
 }

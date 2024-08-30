@@ -19,6 +19,7 @@ type User struct {
 	InterviewQuestionStatusLastUpdatedAt int64   `db:"interviewQuestionStatusLastUpdatedAt"`
 	SkillDescription                     string  `db:"skillDescription"`
 	SkillInfo_                           *string `db:"skillInfo"`
+	FilledSkillInfo                      bool    `db:"filledSkillInfo"`
 
 	// Topics_ is a || separated string
 	Topics_   string `db:"topics"`

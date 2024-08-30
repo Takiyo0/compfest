@@ -206,6 +206,6 @@ func (s *UserService) UpdateSkillDescription(userId int64, desc string) error {
 	return s.userRepository.SetSkillDescription(userId, desc)
 }
 
-func (s *UserService) UpdateSkillInfo(userId int64, skillInfo model.SkillInfo) error {
-	return s.userRepository.SetSkillInfo(userId, skillInfo)
+func (s *UserService) UpdateSkillInfo(userId int64, skillInfo model.SkillInfo, setFilled bool) error {
+	return s.userRepository.SetSkillInfo(userId, skillInfo, setFilled)
 }

@@ -6,6 +6,7 @@ CREATE TABLE users (
     interviewQuestionStatusLastUpdatedAt BIGINT NOT NULL,
     skillDescription MEDIUMTEXT NOT NULL,
     skillInfo MEDIUMTEXT,
+    filledSkillInfo BOOLEAN NOT NULL DEFAULT FALSE,
     createdAt BIGINT NOT NULL,
     topics TEXT NOT NULL
 ) ENGINE = InnoDB;

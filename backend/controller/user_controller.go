@@ -105,6 +105,7 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 		"doneInterview":           user.InterviewQuestionStatus == model.InterviewQuestionStatusQuestionsFinished,
 		"interviewQuestionStatus": user.InterviewQuestionStatus,
 		"skillInfo":               skillInfo,
+		"filledSkillInfo":         user.FilledSkillInfo,
 	})
 }
 
@@ -182,7 +183,7 @@ func (c *UserController) handleUpdateSkillInfo(ctx echo.Context) error {
 		return err
 	}
 
-	if err := c.userService.UpdateSkillInfo(Sess(ctx).UserId, req); err != nil {
+	if err := c.userService.UpdateSkillInfo(Sess(ctx).UserId, req, true); err != nil {
 		return err
 	}
 
