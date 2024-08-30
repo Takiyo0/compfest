@@ -1,3 +1,14 @@
+Format soal:
+[SOAL] isi soal [/SOAL]
+[J1] Pilihan 1 [/J1]
+[J2] Pilihan 2 [/J2]
+[J3] Pilihan 3 [/J3]
+[J4] Pilihan 4 [/J4]
+[JAWABAN] 1 [/JAWABAN]
+[PENJELASAN] Penjelasan [/PENJELASAN]
+
+Penjelasan soal harus sesingkat mungkin dan mudah dipahami.
+
 Berikut adalah soal pilihan ganda dengan 4 pilihan jawaban beserta jawabannya dan penjelasan tentang '{topic}':
 
 [SOAL]
