@@ -99,16 +99,18 @@ func (s *AssistantService) Chat(userId int64, assistantChatId int64, prompt stri
 		Content:     content,
 	})
 
-	go func() {
-		title, err := s.llm.GetChatTitle(llmChats)
-		if err != nil {
-			s.log.WithError(err).Error("failed to get chat title")
-		}
+	if len(llmChats) <= 2 {
+		go func() {
+			title, err := s.llm.GetChatTitle(llmChats)
+			if err != nil {
+				s.log.WithError(err).Error("failed to get chat title")
+			}
 
-		if err := s.assistantRepository.SetChatTitle(assistantChatId, strings.Trim(title, "\n")); err != nil {
-			s.log.WithError(err).Error("failed to set chat title")
-		}
-	}()
+			if err := s.assistantRepository.SetChatTitle(assistantChatId, strings.Trim(title, "\n")); err != nil {
+				s.log.WithError(err).Error("failed to set chat title")
+			}
+		}()
+	}
 
 	return content, nil
 }

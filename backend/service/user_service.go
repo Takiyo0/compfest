@@ -114,14 +114,14 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 	}
 	switch user.InterviewQuestionStatus {
 	case model.InterviewQuestionStatusNotStarted:
-		_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusInProgress)
+		_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsNotReady)
 		go func() {
 			if err := s.generateInterviewQuestions(*user); err != nil {
 				_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
 				s.log.WithError(err).Error("failed to generate interview questions")
 			}
 		}()
-		return s.GetInterviewQuestions(userId)
+		return nil, ErrCreatingInterviewQuestions
 	case model.InterviewQuestionStatusQuestionsNotReady:
 		return nil, ErrCreatingInterviewQuestions
 	case model.InterviewQuestionStatusInProgress, model.InterviewQuestionStatusQuestionsFinished:
@@ -154,11 +154,15 @@ func (s *UserService) generateInterviewQuestions(user model.User) error {
 				Choices_:      string(serializedChoices),
 				CorrectChoice: question.CorrectChoice,
 				CreatedAt:     time.Now().Unix(),
+				Explanation:   question.AnswerExplanation,
 			})
 		}
 	}
 	if err := s.interviewQuestionRepository.InsertQuestions(mappedQuestions, user.ID); err != nil {
 		return fmt.Errorf("failed to insert questions: %w", err)
+	}
+	if err := s.userRepository.SetInterviewQuestionStatus(user.ID, model.InterviewQuestionStatusInProgress); err != nil {
+		return fmt.Errorf("failed to set interview question status: %w", err)
 	}
 	return nil
 }

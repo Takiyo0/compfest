@@ -13,6 +13,7 @@ type InterviewQuestion struct {
 	CorrectChoice int    `db:"correctChoice"`
 	CreatedAt     int64  `db:"createdAt"`
 	UserAnswer    *int   `db:"userAnswer"`
+	Explanation   string `db:"explanation"`
 }
 
 func (q *InterviewQuestion) Choices() ([]string, error) {

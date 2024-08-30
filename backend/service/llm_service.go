@@ -1,26 +1,36 @@
 package service
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/takiyo0/compfest/backend/evaluation"
 	"github.com/takiyo0/compfest/backend/llm"
+	"strings"
 )
 
 type LLMService struct {
+	log logrus.FieldLogger
 	llm *llm.LLM
 }
 
-func NewLLMService(llm *llm.LLM) *LLMService {
-	return &LLMService{llm: llm}
+func NewLLMService(log logrus.FieldLogger, llm *llm.LLM) *LLMService {
+	return &LLMService{log: log, llm: llm}
 }
 
 func (s *LLMService) CreateQuestions(topic string, len int) ([]evaluation.Question, error) {
-	evaluator := evaluation.NewGenerateQuestionEvaluation(s.llm)
+	evaluator := evaluation.NewGenerateQuestionEvaluation(s.log, s.llm)
 	var questions []evaluation.Question
+	failAttempt := 0
 	for i := 0; i < len; i++ {
 		question, err := evaluator.CreateChoiceQuestion(topic)
 		if err != nil {
+			if strings.HasPrefix(err.Error(), "parse error:") && failAttempt < 3 {
+				failAttempt++
+				i--
+				continue
+			}
 			return nil, err
 		}
+		failAttempt = 0
 		questions = append(questions, *question)
 	}
 	return questions, nil
