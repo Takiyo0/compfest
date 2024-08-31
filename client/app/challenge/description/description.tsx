@@ -1,8 +1,8 @@
 'use client'
-import {UserInfoResponse} from "@/app/managers/api";
+import {ApiManager, UserInfoResponse} from "@/app/managers/api";
 import {Manrope} from "next/font/google";
 import Select from 'react-select';
-import {Checkbox, CheckboxGroup, Slider, SliderValue} from "@nextui-org/react";
+import {Button, Checkbox, CheckboxGroup, Slider, SliderValue} from "@nextui-org/react";
 import {Radio, RadioGroup} from "@nextui-org/radio";
 import React from "react";
 import {getCookie} from "cookies-next";
@@ -225,63 +225,6 @@ const questions = [{
     checkboxOptions: {
         data: commonDatabases
     }
-}, {
-    // New questions
-    question: "Apakah Anda pernah menggunakan metode pengujian seperti unit testing atau integration testing?",
-    id: "testingExp",
-    answerType: "choices",
-    choices: [{
-        label: "Ya, saya sering menggunakan testing",
-        value: "yes"
-    }, {
-        label: "Tidak, saya tidak pernah menggunakan testing",
-        value: "no"
-    }]
-}, {
-    question: "Seberapa familiar Anda dengan debugging menggunakan tools seperti Chrome DevTools atau GDB?",
-    id: "debugFamiliarity",
-    answerType: "slider",
-    sliderOptions: {
-        min: 0,
-        max: 4,
-        step: 1,
-        values: ['sangat tidak familiar', 'tidak familiar', 'biasa saja', 'familiar', 'sangat familiar']
-    }
-}, {
-    question: "Apakah Anda memiliki pengalaman bekerja dalam tim menggunakan tools seperti Jira atau Trello?",
-    id: "teamWorkExp",
-    answerType: "choices",
-    choices: [{
-        label: "Ya, saya pernah bekerja dalam tim menggunakan tools tersebut",
-        value: "yes"
-    }, {
-        label: "Tidak, saya belum pernah",
-        value: "no"
-    }]
-}, {
-    question: "Seberapa familiar Anda dengan Cloud Computing (seperti AWS, GCP, Azure)?",
-    id: "cloudFamiliarity",
-    answerType: "slider",
-    sliderOptions: {
-        min: 0,
-        max: 4,
-        step: 1,
-        values: ['sangat tidak familiar', 'tidak familiar', 'biasa saja', 'familiar', 'sangat familiar']
-    }
-}, {
-    question: "Seberapa sering Anda mengikuti perkembangan teknologi terbaru di dunia pemrograman?",
-    id: "techUpdates",
-    answerType: "choices",
-    choices: [{
-        label: "Saya selalu mengikuti perkembangan terbaru",
-        value: "often"
-    }, {
-        label: "Terkadang saya mengikuti perkembangan",
-        value: "sometimes"
-    }, {
-        label: "Saya jarang mengikuti perkembangan teknologi",
-        value: "rarely"
-    }]
 }];
 
 
@@ -303,75 +246,167 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
     }));
     const [submitting, setSubmitting] = React.useState(false);
     const router = useRouter();
-    
+
     const abort = React.useRef(new AbortController);
     const authorization = getCookie("Authorization");
 
     async function onSubmit() {
         if (submitting) return;
+        let finalAnswer: { [key: string]: any } = {};
+        for (const answer of answers) {
+            let parsedValue: any = answer.value;
+            if (answer.type == "choices") {
+                parsedValue = answer.value == "yes";
+            }
+            finalAnswer[answer.id] = parsedValue;
+        }
         setSubmitting(true);
 
-        const {statusCode, data} = await ApiManager.SubmitDescription(abort, authorization, answers);
-        if (statusCode !== 200) return // show error toast
+        const {
+            statusCode,
+            data
+        } = await ApiManager.SubmitDescription(abort.current.signal, authorization ?? "", finalAnswer);
+        setSubmitting(false);
+        console.log(data)
+        if (statusCode !== 200) return toast.error("Something went wrong when processing the request. Please try again later!", {
+            style: {
+                borderRadius: '20px',
+                background: '#151414',
+                color: '#fff',
+            },
+        })
         router.push("/challenge/processing");
-        
     }
-    return <main className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 " + manrope.style}>
-        <div className={"flex flex-col gap-10 mt-10 w-[800px] max-w-[90vw]"}>
-            {questions.map((data, index) => {
-                const type = data.answerType;
 
-                if (type == "slider") return <div key={index}>
-                    <p className={"mb-2"}>{index + 1}. {data.question}</p>
-                    <Slider
-                        size="md"
-                        step={data.sliderOptions!.step}
-                        color="foreground"
-                        label={"Silahkan geser"}
-                        showSteps={true}
-                        maxValue={data.sliderOptions!.max}
-                        minValue={data.sliderOptions!.min}
-                        value={answers[index].value}
-                        onChange={(v: any) => {
-                            setAnswers(d => {
-                                const newAnswers = [...d]; // Create a copy of the array
-                                newAnswers[index].value = v; // Update the specific value
+    return <>
+        <Header userInfo={userData} center={true}/>
+        <main
+            className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.style}>
+            <div className={"flex flex-col gap-10 mt-10 w-[800px] max-w-[90vw]"}>
+                {questions.map((data, index) => {
+                    const type = data.answerType;
+
+                    if (type == "slider") return <div key={index}>
+                        <p className={"mb-2"}>{index + 1}. {data.question}</p>
+                        <Slider
+                            size="md"
+                            step={data.sliderOptions!.step}
+                            color="foreground"
+                            label={"Silahkan geser"}
+                            isDisabled={submitting}
+                            showSteps={true}
+                            maxValue={data.sliderOptions!.max}
+                            minValue={data.sliderOptions!.min}
+                            value={answers[index].value}
+                            classNames={{base: "ml-7"}}
+                            onChange={(v: any) => {
+                                setAnswers(d => {
+                                    const newAnswers = [...d]; // Create a copy of the array
+                                    newAnswers[index].value = v; // Update the specific value
+                                    console.log(newAnswers);
+                                    return newAnswers; // Return the updated array
+                                });
+                            }}
+                            getValue={(v: SliderValue) => data.sliderOptions!.values![v as number] || v.toString()}
+                            className="max-w-md"
+                        />
+                    </div>
+                    else if (type == "choices") return <div key={index}>
+                        <p className={"mb-2"}>{index + 1}. {data.question}</p>
+                        <RadioGroup
+                            value={answers[index].value}
+                            isDisabled={submitting}
+                            className={"ml-5"}
+                            onChange={(v) => setAnswers(d => {
+                                const newAnswers = d.map(x => x.id == data.id ? {...x, value: v.target.value} : x);
                                 console.log(newAnswers);
-                                return newAnswers; // Return the updated array
-                            });
-                        }}
-                        getValue={(v: SliderValue) => data.sliderOptions!.values![v as number] || v.toString()}
-                        className="max-w-md"
-                    />
-                </div>
-                else if (type == "choices") return <div key={index}>
-                    <p className={"mb-2"}>{index + 1}. {data.question}</p>
-                    <RadioGroup
-                        value={answers[index].value}
-                        onChange={(v) => setAnswers(d => {
-                            const newAnswers = d.map(x => x.id == data.id ? {...x, value: v.target.value} : x);
-                            console.log(newAnswers);
-                            return newAnswers;
-                        })}
-                    >
-                        {data.choices!.map((x, k) => <Radio key={k} value={x.value}>{x.label}</Radio>)}
-                    </RadioGroup>
-                </div>
-                else if (type == "checkbox") return <div key={index}>
-                    <p className={"mb-2"}>{index + 1}. {data.question}</p>
-                    <CheckboxGroup
-                        orientation={"horizontal"}
-                        value={answers.find(x => x.id == data.id)!.value}
-                        onValueChange={(v) => setAnswers(d => {
-                            const newAnswers = d.map(x => x.id == data.id ? {...x, value: v} : x);
-                            console.log(newAnswers);
-                            return newAnswers;
-                        })}
-                    >
-                        {data.checkboxOptions!.data.map((x, k) => <Checkbox key={k} value={x.value}>{x.label}</Checkbox>)}
-                    </CheckboxGroup>
-                </div>
-            })}
-        </div>
-    </main>
+                                return newAnswers;
+                            })}
+                        >
+                            {data.choices!.map((x, k) => <Radio key={k} value={x.value}>{x.label}</Radio>)}
+                        </RadioGroup>
+                    </div>
+                    else if (type == "checkbox") {
+                        return (
+                            <div key={index}>
+                                <p className={"mb-2"}>{index + 1}. {data.question}</p>
+                                <CheckboxGroup
+                                    orientation={"horizontal"}
+                                    isDisabled={submitting}
+                                    className={"ml-4"}
+                                    value={answers.find(x => x.id == data.id)?.value.map((x: {
+                                        name: string;
+                                        level: 1 | 2 | 3
+                                    }) => x.name) || []}
+                                    onValueChange={(v) => setAnswers(d => {
+                                        const newAnswers = d.map(x => x.id == data.id
+                                            ? {
+                                                ...x,
+                                                value: v.map((name: string) => ({
+                                                    name,
+                                                    level: x.value?.find((val: {
+                                                        name: string
+                                                    }) => val.name === name)?.level || 1
+                                                }))
+                                            }
+                                            : x
+                                        );
+                                        console.log(newAnswers);
+                                        return newAnswers;
+                                    })}
+                                >
+                                    {data.checkboxOptions!.data.map((x, k) => (
+                                        <Checkbox key={k} value={x.value}>
+                                            {x.label}
+                                        </Checkbox>
+                                    ))}
+                                </CheckboxGroup>
+
+                                {answers[index]?.value.map((x: { name: string; level: 1 | 2 | 3 }, a: number) => {
+                                    return (
+                                        <div key={a} className={"mt-4 ml-12"}>
+                                            <p className={"mb-2"}>{index + 1}.{a + 1}. Seberapa ahli Anda
+                                                dalam {x.name}?</p>
+                                            <Slider
+                                                size="md"
+                                                step={1}
+                                                color="foreground"
+                                                label={"Silahkan geser"}
+                                                isDisabled={submitting}
+                                                showSteps={true}
+                                                maxValue={3}
+                                                minValue={1}
+                                                value={x.level}
+                                                classNames={{base: "ml-7"}}
+                                                getValue={(v: SliderValue) => v == 1 ? "pemula" : v == 2 ? "menegah" : "ahli"}
+                                                onChange={(v: any) => {
+                                                    setAnswers(d => {
+                                                        const newAnswers = [...d];
+                                                        newAnswers[index].value = newAnswers[index].value.map((item: {
+                                                                name: string;
+                                                                level: 1 | 2 | 3
+                                                            }) =>
+                                                                item.name === x.name ? {...item, level: v} : item
+                                                        );
+                                                        console.log(newAnswers);
+                                                        return newAnswers;
+                                                    });
+                                                }}
+                                                className="max-w-md"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    }
+                })}
+
+                <Button className={"w-fit ml-auto"} color={"primary"} onClick={() => onSubmit()} isLoading={submitting}
+                        endContent={<MdOutlineNavigateNext size={27} className={"-mr-3"}/>}>
+                    Next
+                </Button>
+            </div>
+        </main>
+    </>
 }
