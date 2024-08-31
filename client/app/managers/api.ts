@@ -3,7 +3,7 @@ import CryptoJS from "crypto-js";
 import {opt} from "ts-interface-checker";
 
 export class ApiManager {
-    public static BaseUrl = "https://f009-180-244-132-226.ngrok-free.app";
+    public static BaseUrl = "https://b7be-180-244-132-141.ngrok-free.app";
     public static encryptionKey = "bad7a50445665cb529f402ad7e78650cd9877725b8499e3597c6125e89f32766";
 
     public static async getUser(signal: AbortSignal, token: string): Promise<UserInfoResponse> {
@@ -22,8 +22,16 @@ export class ApiManager {
         return this.Get<ChatMessagesResponse>(`assistant/chat/${id}/messages`, signal, token);
     }
 
-    public static async SubmitDescription(signal: AbortSignal, token: string, answers: any) : Promise<BaseApiResponse> {
-   		return this.Post('user/questions/decription', signal, token, { body: JSON.stringify(answers) });
+    public static async SubmitDescription(signal: AbortSignal, token: string, answers: any): Promise<BaseApiResponse> {
+        return this.Post('user/skill-info', signal, token, {data: answers});
+    }
+
+    public static async GetInterviewQuestions(signal: AbortSignal, token: string): Promise<InterviewQuestionsResponse> {
+        return this.Get('user/questions/', signal, token);
+    }
+
+    public static async SendInterviewAnswer(signal: AbortSignal, token: string, questionId: number, answer: number): Promise<BaseApiResponse> {
+        return this.Post(`user/questions/${questionId}/answer`, signal, token, {data: {answer}});
     }
 
     private static async Post<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
@@ -122,6 +130,12 @@ export interface BaseApiResponse {
     data: any;
 }
 
+export interface InterviewAnswerResponse extends BaseApiResponse {
+    data: {
+        message: string;
+    }
+}
+
 export interface UserInfoResponse extends BaseApiResponse {
     data: {
         userId: number;
@@ -153,4 +167,16 @@ export interface ChatMessagesResponse extends BaseApiResponse {
         content: string;
         created_at: number;
     }[]
+}
+
+export interface InterviewQuestionsResponse extends BaseApiResponse {
+    data: {
+        ready: boolean;
+        questions: {
+            id: number;
+            content: string;
+            choices: string[];
+            userAnswer?: number;
+        }[];
+    }
 }
