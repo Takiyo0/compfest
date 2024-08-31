@@ -201,18 +201,15 @@ const questions = [{
         value: "no"
     }]
 }, {
-    question: "Seberapa sering Anda mengerjakan soal tantangan pemrograman? (seperti leetcode, toki, dan lain-lain)",
+    question: "Apakah Anda pernah mengerjakan soal tantangan pemrograman? (seperti leetcode, toki, dan lain-lain)",
     id: "doCodingChalls",
     answerType: "choices",
     choices: [{
-        label: "Saya sering mengerjakan",
-        value: "often"
+        label: "Ya, Saya pernah",
+        value: "yes"
     }, {
-        label: "Terkadang saya mengerjakannya",
-        value: "rare"
-    }, {
-        label: "Saya tidak pernah mengerjakan soal tantangan",
-        value: "never"
+        label: "Tidak, Saya tidak pernah mengerjakannya",
+        value: "no"
     }]
 }, {
     question: "Framework mana saja yang anda ketahui dan pernah menggunakannya dari bawah ini?",
