@@ -7,6 +7,8 @@ import {Radio, RadioGroup} from "@nextui-org/radio";
 import React from "react";
 import {getCookie} from "cookies-js";
 import {useRouter}	 from "next/navigation";
+import {getCookie} from "cookies-next";
+import {useRouter} from "next/navigation";
 
 const programmingLanguages = [
     {value: 'assembly', label: 'Assembly'},
