@@ -5,10 +5,11 @@ import Select from 'react-select';
 import {Checkbox, CheckboxGroup, Slider, SliderValue} from "@nextui-org/react";
 import {Radio, RadioGroup} from "@nextui-org/radio";
 import React from "react";
-import {getCookie} from "cookies-js";
-import {useRouter}	 from "next/navigation";
 import {getCookie} from "cookies-next";
 import {useRouter} from "next/navigation";
+import Header from "@/app/components/header";
+import {MdOutlineNavigateNext} from "react-icons/md"
+import toast from "react-hot-toast";
 
 const programmingLanguages = [
     {value: 'assembly', label: 'Assembly'},
@@ -162,7 +163,7 @@ const commonDatabases = [
 
 const questions = [{
     question: "Bahasa pemrograman apa saja yang anda ketahui?",
-    id: "knownLanguage",
+    id: "knownLanguages",
     answerType: "checkbox",
     checkboxOptions: {
         data: programmingLanguages
@@ -222,7 +223,7 @@ const questions = [{
     }
 }, {
     question: "Database apa yang anda ketahui dan pernah menggunakannya?",
-    id: "knownDb",
+    id: "knownDB",
     answerType: "checkbox",
     checkboxOptions: {
         data: commonDatabases
