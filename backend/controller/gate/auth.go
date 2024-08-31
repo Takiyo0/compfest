@@ -9,17 +9,10 @@ import (
 func Auth(userService *service.UserService) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
-			// TODO: remove this when browser supports send authorization header in SSE request
-			type sseAuthQuery struct {
-				Token string `query:"_sseToken"`
-			}
-			var sseAuthQueryReq sseAuthQuery
-			if err := ctx.Bind(&sseAuthQueryReq); err != nil {
-				return err
-			}
-			if sseAuthQueryReq.Token != "" {
+			sseToken := ctx.QueryParam("_sseToken")
+			if sseToken != "" {
 				// decode token using base64
-				base64DecodedToken, err := base64.StdEncoding.DecodeString(sseAuthQueryReq.Token)
+				base64DecodedToken, err := base64.StdEncoding.DecodeString(sseToken)
 				if err != nil {
 					return err
 				}

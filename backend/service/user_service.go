@@ -135,10 +135,13 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 }
 
 func (s *UserService) generateInterviewQuestions(user model.User) error {
-	topics := user.Topics()
+	topics, err := s.GetInterviewQuestionTopics(user)
+	if err != nil {
+		return fmt.Errorf("failed to get interview question topics: %w", err)
+	}
 	mappedQuestions := make([]model.InterviewQuestion, 0)
 	for _, topic := range topics {
-		questions, err := s.llmService.CreateQuestions(topic, 5)
+		questions, err := s.llmService.CreateQuestions(topic, 1) // TODO: increase this when LLM is faster
 		if err != nil {
 			return fmt.Errorf("failed to create questions for topic %s: %w", topic, err)
 		}
@@ -208,4 +211,56 @@ func (s *UserService) UpdateSkillDescription(userId int64, desc string) error {
 
 func (s *UserService) UpdateSkillInfo(userId int64, skillInfo model.SkillInfo, setFilled bool) error {
 	return s.userRepository.SetSkillInfo(userId, skillInfo, setFilled)
+}
+
+func (s *UserService) GetInterviewQuestionTopics(user model.User) ([]string, error) {
+	skillInfo, err := user.SkillInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	topics := make([]string, 0)
+
+	scaleFiveLevels := map[int]string{
+		1: "Newbie",
+		2: "Beginner",
+		3: "Intermediate",
+		4: "Advanced",
+		5: "Expert",
+	}
+	scaleThreeLevels := map[int]string{
+		1: "Beginner",
+		2: "Intermediate",
+		3: "Advanced",
+	}
+
+	if skillInfo.KnownLanguages != nil {
+		for _, skill := range skillInfo.KnownLanguages {
+			topics = append(topics, fmt.Sprintf("Bahasa Pemrograman: %s (%s)", skill.Name, scaleThreeLevels[skill.Level]))
+		}
+	}
+
+	if skillInfo.AlgoDSComfort != nil && *skillInfo.AlgoDSComfort > 0 {
+		topics = append(topics, fmt.Sprintf("Algoritma & Struktur Data (%s)", scaleFiveLevels[*skillInfo.AlgoDSComfort]))
+	}
+
+	if skillInfo.AlgoExp != nil && *skillInfo.AlgoExp {
+		topics = append(topics, "Algoritma")
+	}
+
+	if skillInfo.UseGit != nil && *skillInfo.UseGit {
+		topics = append(topics, "Version Control System: Git")
+	}
+
+	if skillInfo.DoCodingChalls != nil && *skillInfo.DoCodingChalls {
+		topics = append(topics, "Coding Challenges / Competitive Programming")
+	}
+
+	if skillInfo.KnownDB != nil {
+		for _, skill := range skillInfo.KnownDB {
+			topics = append(topics, fmt.Sprintf("Database: %s (%s)", skill.Name, scaleThreeLevels[skill.Level]))
+		}
+	}
+
+	return topics, nil
 }

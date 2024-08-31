@@ -145,21 +145,22 @@ Updates the user's skill info.
 Request:
 ```ts
 interface SkillInfo {
-    knownLanguages: string[];
+    knownLanguages: {
+        name: string;
+        level: 1 | 2 | 3;
+    }[];
     algoDSComfort: number;
     algoExp: boolean;
     useGit: boolean;
     doCodingChalls: boolean;
-    knownFw: string[];
-    feExp: boolean;
-    beExp: boolean;
-    fsProficiency: number;
-    knownDB: string[];
-    testingExp: boolean;
-    debugFamiliarity: number;
-    teamWorkExp: boolean;
-    cloudFamiliarity: number;
-    techUpdates: boolean;
+    knownFw: {
+      name: string;
+      level: 1 | 2 | 3;
+    }[];
+    knownDB: {
+      name: string;
+      level: 1 | 2 | 3;
+    }[];
 }
 ```
 
