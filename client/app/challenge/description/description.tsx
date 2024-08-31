@@ -5,6 +5,8 @@ import Select from 'react-select';
 import {Checkbox, CheckboxGroup, Slider, SliderValue} from "@nextui-org/react";
 import {Radio, RadioGroup} from "@nextui-org/radio";
 import React from "react";
+import {getCookie} from "cookies-js";
+import {useRouter}	 from "next/navigation";
 
 const programmingLanguages = [
     {value: 'assembly', label: 'Assembly'},
@@ -329,6 +331,21 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
 
         return data;
     }));
+    const [submitting, setSubmitting] = React.useState(false);
+    const router = useRouter();
+    
+    const abort = React.useRef(new AbortController);
+    const authorization = getCookie("Authorization");
+
+    async function onSubmit() {
+        if (submitting) return;
+        setSubmitting(true);
+
+        const {statusCode, data} = await ApiManager.SubmitDescription(abort, authorization, answers);
+        if (statusCode !== 200) return // show error toast
+        router.push("/challenge/processing");
+        
+    }
     return <main className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 " + manrope.style}>
         <div className={"flex flex-col gap-10 mt-10 w-[800px] max-w-[90vw]"}>
             {questions.map((data, index) => {
