@@ -117,6 +117,18 @@ interface UserAnswerResponse {
 }
 ```
 
+### `POST` /user/submit-interview
+**[Authentication is required]**
+
+Marks the user's interview as complete.
+
+Response `200 OK`:
+```ts
+interface SubmitInterviewResponse {
+  message: string;
+}
+```
+
 ### `POST` /user/skill-description 
 
 **[Authentication is required]**

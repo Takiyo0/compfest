@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/google/go-github/v50/github"
 	"github.com/jmoiron/sqlx"
@@ -54,5 +55,14 @@ func (r *UserRepository) SetSkillInfo(id int64, skillInfo model.SkillInfo, setFi
 		return err
 	}
 	_, err = r.db.Exec("UPDATE users SET skillInfo = ?, filledSkillInfo = ?  WHERE id = ?", string(skillInfoStr), setFilled, id)
+	return err
+}
+
+func (r *UserRepository) SubmitInterview(userId int64) error {
+	update, err := r.db.Exec("UPDATE users SET interviewQuestionStatus = ? WHERE id = ? AND interviewQuestionStatus = ? AND (SELECT COUNT(*) FROM interviewQuestions WHERE interviewQuestions.userId = ?) = (SELECT COUNT(*) FROM interviewQuestions WHERE interviewQuestions.userId = ? AND userAnswer IS NOT NULL)", model.InterviewQuestionStatusQuestionsFinished, userId, model.InterviewQuestionStatusInProgress, userId, userId)
+	rowsAffected, _ := update.RowsAffected()
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
 	return err
 }

@@ -264,3 +264,7 @@ func (s *UserService) GetInterviewQuestionTopics(user model.User) ([]string, err
 
 	return topics, nil
 }
+
+func (s *UserService) SubmitInterview(userId int64) error {
+	return s.userRepository.SubmitInterview(userId)
+}

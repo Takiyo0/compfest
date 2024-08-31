@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"database/sql"
 	"github.com/google/go-github/v50/github"
 	"github.com/labstack/echo/v4"
 	"github.com/takiyo0/compfest/backend/controller/gate"
@@ -35,6 +36,7 @@ func (c *UserController) SetUp(e *echo.Echo) {
 	qg.GET("/", c.handleGetQuestions)
 	qg.POST("/:id/answer", c.handleAnswerQuestion)
 
+	g.POST("/submit-interview", c.handleSubmitInterview, authGate)
 	g.POST("/skill-description", c.handleUpdateSkillDescription, authGate)
 	g.POST("/skill-info", c.handleUpdateSkillInfo, authGate)
 }
@@ -161,6 +163,16 @@ func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, M("Answered"))
+}
+
+func (c *UserController) handleSubmitInterview(ctx echo.Context) error {
+	if err := c.userService.SubmitInterview(Sess(ctx).UserId); err != nil {
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "An error occurred. The interview might not be ready yet or has been submitted.")
+		}
+		return err
+	}
+	return ctx.JSON(http.StatusOK, M("Submitted"))
 }
 
 func (c *UserController) handleUpdateSkillDescription(ctx echo.Context) error {
