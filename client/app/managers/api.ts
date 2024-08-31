@@ -22,6 +22,10 @@ export class ApiManager {
         return this.Get<ChatMessagesResponse>(`assistant/chat/${id}/messages`, signal, token);
     }
 
+    public static async SubmitDescription(signal: AbortSignal, token: string, answers: any) : Promise<BaseApiResponse> {
+   		return this.Post('user/questions/decription', signal, token, { body: JSON.stringify(answers) });
+    }
+
     private static async Post<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
         try {
             let selfOptions: AxiosRequestConfig = {
