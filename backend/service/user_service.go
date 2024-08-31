@@ -189,9 +189,6 @@ func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, an
 	if question.UserId != userId {
 		return &echo.HTTPError{Code: http.StatusForbidden, Message: "You don't have permission to answer this question"}
 	}
-	if question.UserAnswer != nil {
-		return &echo.HTTPError{Code: http.StatusBadRequest, Message: "Question already answered"}
-	}
 	choices, err := question.Choices()
 	if err != nil {
 		return fmt.Errorf("failed to parse choices for question %d: %w", questionId, err)
