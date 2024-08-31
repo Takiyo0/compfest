@@ -219,36 +219,6 @@ const questions = [{
         data: knownFrameworks
     }
 }, {
-    question: "Apakah Anda mempunyai pengalaman dalam Front-End?",
-    id: "feExp",
-    answerType: "slider",
-    sliderOptions: {
-        min: 0,
-        max: 5,
-        step: 1,
-        values: ['tidak', 'pemula', 'dasar', 'menengah', 'lanjutan', 'ahli']
-    }
-}, {
-    question: "Apakah Anda mempunyai pengalaman dalam Back-End?",
-    id: "beExp",
-    answerType: "slider",
-    sliderOptions: {
-        min: 0,
-        max: 5,
-        step: 1,
-        values: ['tidak', 'pemula', 'dasar', 'menengah', 'lanjutan', 'ahli']
-    }
-}, {
-    question: "Apakah Anda menganggap Anda sebagai Full-Stack Developer?",
-    id: "fsProficiency",
-    answerType: "slider",
-    sliderOptions: {
-        min: 0,
-        max: 4,
-        step: 1,
-        values: ['tidak', 'ya, hanya dasarnya', 'aku mah masih pemula', 'saya lumayan ahli', 'saya sudah ahli 😎']
-    }
-}, {
     question: "Database apa yang anda ketahui dan pernah menggunakannya?",
     id: "knownDb",
     answerType: "checkbox",
