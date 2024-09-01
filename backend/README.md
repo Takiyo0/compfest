@@ -93,6 +93,10 @@ interface UserQuestionsResponse {
     content: string;
     choices: string[];
     userAnswer?: number;
+    
+    // if user.doneInterview = true
+    correctAnswer?: number;
+    answerExplanation?: string;
   }[];
 }
 ```

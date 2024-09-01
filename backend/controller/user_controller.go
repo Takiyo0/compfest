@@ -112,11 +112,17 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 }
 
 func (c *UserController) handleGetQuestions(ctx echo.Context) error {
+	user, err := c.userService.FindUserById(Sess(ctx).UserId)
+	if err != nil {
+		return err
+	}
 	type questionType struct {
-		Id         int64    `json:"id"`
-		Content    string   `json:"content"`
-		Choices    []string `json:"choices"`
-		UserAnswer *int     `json:"userAnswer"`
+		Id                int64    `json:"id"`
+		Content           string   `json:"content"`
+		Choices           []string `json:"choices"`
+		UserAnswer        *int     `json:"userAnswer"`
+		CorrectAnswer     *int     `json:"correctAnswer,omitempty"`
+		AnswerExplanation *string  `json:"answerExplanation,omitempty"`
 	}
 	type respType struct {
 		Ready     bool           `json:"ready"`
@@ -135,12 +141,17 @@ func (c *UserController) handleGetQuestions(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
-		questionList = append(questionList, questionType{
+		qAppend := questionType{
 			Id:         q.Id,
 			Content:    q.Content,
 			Choices:    choices,
 			UserAnswer: q.UserAnswer,
-		})
+		}
+		if user.InterviewQuestionStatus == model.InterviewQuestionStatusQuestionsFinished {
+			qAppend.CorrectAnswer = &q.CorrectChoice
+			qAppend.AnswerExplanation = &q.Explanation
+		}
+		questionList = append(questionList, qAppend)
 	}
 	return ctx.JSON(http.StatusOK, &respType{Ready: true, Questions: questionList})
 }
