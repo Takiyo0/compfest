@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/jmoiron/sqlx"
+	"github.com/takiyo0/compfest/backend/database"
 	"github.com/takiyo0/compfest/backend/model"
 )
 
@@ -29,10 +30,22 @@ func (r *SkillTreeRepository) FindById(id int64) (*model.SkillTree, error) {
 	return &skillTree, nil
 }
 
-func (r *SkillTreeRepository) Create(skillTree *model.SkillTree) (int64, error) {
-	insert, err := r.db.Exec("INSERT INTO skillTrees (userId, content, childSkillTreeIds, createdAt) VALUES (?, ?, ?, ?)", skillTree.UserId, skillTree.Content, skillTree.CreatedAt)
-	if err != nil {
-		return 0, err
+func (r *SkillTreeRepository) FindEntriesBySkillTreeId(skillTreeId int64) ([]model.SkillTreeEntry, error) {
+	var entries []model.SkillTreeEntry
+	if err := r.db.Select(&entries, "SELECT * FROM skillTreeEntries WHERE skillTreeId = ?", skillTreeId); err != nil {
+		return nil, err
 	}
-	return insert.LastInsertId()
+	return entries, nil
+}
+
+func (r *SkillTreeRepository) BulkCreate(skillTrees []model.SkillTree) error {
+	values := make([][]any, 0)
+	for _, skillTree := range skillTrees {
+		var id *int64
+		if skillTree.Id != 0 {
+			id = &skillTree.Id
+		}
+		values = append(values, []any{id, skillTree.UserId, skillTree.ChildSkillTreeIds_, skillTree.CreatedAt})
+	}
+	return database.BulkInsert(r.db, "skillTrees", []string{"id", "userId", "childSkillTreeIds", "createdAt"}, values)
 }

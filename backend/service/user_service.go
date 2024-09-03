@@ -265,3 +265,11 @@ func (s *UserService) GetInterviewQuestionTopics(user model.User) ([]string, err
 func (s *UserService) SubmitInterview(userId int64) error {
 	return s.userRepository.SubmitInterview(userId)
 }
+
+func (s *UserService) SetTopics(userId int64, topics []string) error {
+	return s.userRepository.SetTopics(userId, topics)
+}
+
+func (s *UserService) SetSkillTreeStatus(userId int64, status string) error {
+	return s.userRepository.SetSkillTreeStatus(userId, status)
+}

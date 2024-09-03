@@ -1,9 +1,15 @@
 package model
 
+const (
+	SkillTreeContentStatusNone       = "NONE"
+	SkillTreeContentStatusGenerating = "GENERATING"
+	SkillTreeContentStatusGenerated  = "GENERATED"
+)
+
 type SkillTree struct {
 	Id                 int64  `db:"id"`
+	Title              string `db:"title"`
 	UserId             int64  `db:"userId"`
-	Content            string `db:"content"`
 	ChildSkillTreeIds_ string `db:"childSkillTreeIds"`
 	IsQuestionsReady   bool   `db:"isQuestionsReady"`
 	CreatedAt          int64  `db:"createdAt"`
@@ -24,4 +30,14 @@ type SkillTreeQuestion struct {
 	Choices_      string `db:"choices"`
 	CorrectChoice int    `db:"correctChoice"`
 	CreatedAt     int64  `db:"createdAt"`
+}
+
+type SkillTreeEntry struct {
+	Id            int64   `db:"id"`
+	SkillTreeId   int64   `db:"skillTreeId"`
+	Title         string  `db:"title"`
+	Description   string  `db:"description"`
+	Content       *string `db:"content"`
+	ContentStatus string  `db:"contentStatus"`
+	CreatedAt     int64   `db:"createdAt"`
 }

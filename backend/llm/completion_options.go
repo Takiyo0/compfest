@@ -12,4 +12,6 @@ type CompletionOptions struct {
 	TfsZ        float64  `json:"tfs_z,omitempty"`
 	Seed        int      `json:"seed,omitempty"`
 	Stream      bool     `json:"stream,omitempty"`
+	Grammar     string   `json:"grammar,omitempty"`
+	JSONSchema  any      `json:"json_schema,omitempty"`
 }

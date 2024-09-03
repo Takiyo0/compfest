@@ -66,3 +66,8 @@ func (r *UserRepository) SubmitInterview(userId int64) error {
 	}
 	return err
 }
+
+func (r *UserRepository) SetSkillTreeStatus(userId int64, status string) error {
+	_, err := r.db.Exec("UPDATE users SET skillTreeStatus = ? WHERE id = ?", status, userId)
+	return err
+}

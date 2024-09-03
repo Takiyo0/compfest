@@ -18,9 +18,16 @@ func NewSkillTreeController(userService *service.UserService, skillTreeService *
 func (c *SkillTreeController) SetUp(e *echo.Echo) {
 	authGate := gate.Auth(c.userService)
 
-	g := e.Group("/tree/:id", authGate)
-	g.GET("/questions", c.handleGetQuestions)
-	g.POST("/questions", c.handleSubmitAnswer)
+	g := e.Group("/tree")
+	g.GET("/", c.handleGetSkillTree)
+
+	gt := g.Group("/:id", authGate)
+	gt.GET("/questions", c.handleGetQuestions)
+	gt.POST("/questions", c.handleSubmitAnswer)
+}
+
+func (c *SkillTreeController) handleGetSkillTree(ctx echo.Context) error {
+	return nil
 }
 
 func (c *SkillTreeController) handleGetQuestions(ctx echo.Context) error {

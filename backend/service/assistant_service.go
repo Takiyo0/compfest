@@ -11,7 +11,7 @@ import (
 
 type AssistantService struct {
 	log                 logrus.FieldLogger
-	llm                 *LLMService
+	llmService          *LLMService
 	assistantRepository *repository.AssistantRepository
 }
 
@@ -20,7 +20,7 @@ func NewAssistantService(log logrus.FieldLogger, assistantRepository *repository
 }
 
 func (s *AssistantService) SetLLMService(llm *LLMService) {
-	s.llm = llm
+	s.llmService = llm
 }
 
 func (s *AssistantService) CreateChat(userId int64) (int64, error) {
@@ -89,7 +89,7 @@ func (s *AssistantService) Chat(userId int64, assistantChatId int64, prompt stri
 		return onGenerate(content)
 	}
 
-	content, err := s.llm.Chat(llmChats, onGenerateHandler)
+	content, err := s.llmService.Chat(llmChats, onGenerateHandler)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +101,7 @@ func (s *AssistantService) Chat(userId int64, assistantChatId int64, prompt stri
 
 	if len(llmChats) <= 2 {
 		go func() {
-			title, err := s.llm.GetChatTitle(llmChats)
+			title, err := s.llmService.GetChatTitle(llmChats)
 			if err != nil {
 				s.log.WithError(err).Error("failed to get chat title")
 			}

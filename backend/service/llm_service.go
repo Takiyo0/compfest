@@ -42,7 +42,8 @@ type LLMChat struct {
 }
 
 func (s *LLMService) Chat(chats []LLMChat, onGenerate func(string) error) (string, error) {
-	prompt := "Anda adalah asisten berguna yang membantu user dalam menyelesaikan tugas. Mohon lanjutkan percakapan anda berikut:\n\n"
+	// TODO: do not hardcode prompt!
+	prompt := "Anda adalah asisten berguna yang membantu user dalam menyelesaikan tugas. Mohon lanjutkan percakapan anda berikut:\n\n<<<User>>> Halo!\n\n<<<Asisten>>> Halo!\n\nSaya adalah seorang asisten virtual anda yang bisa menjawab pertanyaan, membantu menyelesaikan masalah anda.\n\nApakah ada yang bisa saya bantu?\n\n"
 	for _, chat := range chats {
 		prompt += "<<<"
 		if chat.IsAssistant {
@@ -60,6 +61,7 @@ func (s *LLMService) Chat(chats []LLMChat, onGenerate func(string) error) (strin
 }
 
 func (s *LLMService) GetChatTitle(chats []LLMChat) (string, error) {
+	// TODO: do not hardcode prompt!
 	prompt := "Mohon berikan judul dari percakapan dibawah ini maksimal 15 kata:\n\n"
 	for _, chat := range chats {
 		prompt += "<<<"
@@ -70,10 +72,44 @@ func (s *LLMService) GetChatTitle(chats []LLMChat) (string, error) {
 		}
 		prompt += ">>> " + chat.Content + "\n\n"
 	}
-	prompt += "<<<Ringkasan>>> Dari percakapan diatas, kami menyimpulkan judul dari percakapan dengan maksimal 15 kata yaitu: "
-	return s.llm.Completion(llm.IndoprogC, llm.CompletionOptions{
+
+	prompt += "<<<Ringkasan>>> Dari percakapan diatas, kami menyimpulkan judul dari percakapan dengan maksimal 15 kata yaitu: `"
+
+	result, err := s.llm.Completion(llm.IndoprogC, llm.CompletionOptions{
 		Prompt:   prompt,
-		NPredict: 64,
+		NPredict: 48,
 		Stop:     []string{"<<<Ringkasan>>>", "<<<Asisten>>>", "<<<User>>>"},
 	})
+	if err != nil {
+		return "", err
+	}
+
+	if strings.HasSuffix(result, "`") {
+		result = result[:len(result)-1]
+	}
+
+	return result, nil
+}
+
+func (s *LLMService) GenerateSkillTree(topics []string) ([]evaluation.SkillTree, error) {
+	evaluator := evaluation.NewSkillTreeEvaluation(s.log, s.llm)
+	var skillTrees []evaluation.SkillTree
+	failAttempt := 0
+	for _, t := range topics {
+		success := false
+		for !success {
+			skillTree, err := evaluator.CreateSkillTree(t)
+			if err != nil {
+				if strings.HasPrefix(err.Error(), "parse error:") && failAttempt < 3 {
+					failAttempt++
+					continue
+				}
+				return nil, err
+			}
+			skillTrees = append(skillTrees, *skillTree)
+			success = true
+			failAttempt = 0
+		}
+	}
+	return skillTrees, nil
 }

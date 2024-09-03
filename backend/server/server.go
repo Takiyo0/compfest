@@ -60,6 +60,7 @@ func (s *Server) Start() error {
 	sessionRepository := repository.NewSessionRepository(db)
 	interviewQuestionRepository := repository.NewInterviewQuestionRepository(db)
 	assistantRepository := repository.NewAssistantRepository(db)
+	skillTreeRepository := repository.NewSkillTreeRepository(db)
 
 	llmService := service.NewLLMService(s.log, s.ai)
 
@@ -69,8 +70,12 @@ func (s *Server) Start() error {
 	assistantService := service.NewAssistantService(s.log, assistantRepository)
 	assistantService.SetLLMService(llmService)
 
+	skillTreeService := service.NewSkillTreeService(s.log, skillTreeRepository)
+	skillTreeService.SetLLMService(llmService)
+
 	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
 	s.addController(controller.NewAssistantController(assistantService, userService))
+	s.addController(controller.NewSkillTreeController(userService, skillTreeService))
 
 	return s.e.Start(":8085")
 }

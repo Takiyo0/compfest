@@ -7,6 +7,7 @@ CREATE TABLE users (
     skillDescription MEDIUMTEXT NOT NULL,
     skillInfo MEDIUMTEXT,
     filledSkillInfo BOOLEAN NOT NULL DEFAULT FALSE,
+    skillTreeStatus ENUM('NOT_STARTED', 'NOT_READY', 'IN_PROGRESS', 'SUCCESS') DEFAULT 'NOT_STARTED' NOT NULL,
     createdAt BIGINT NOT NULL,
     topics TEXT NOT NULL
 ) ENGINE = InnoDB;
@@ -36,12 +37,21 @@ CREATE TABLE interviewQuestions (
 CREATE TABLE skillTrees (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     userId BIGINT NOT NULL,
-    content MEDIUMTEXT NOT NULL COMMENT 'json serialized skill tree',
     childSkillTreeIds TEXT NOT NULL COMMENT 'comma separated list of skill tree ids',
     isQuestionsReady BOOLEAN NOT NULL DEFAULT FALSE,
-    links MEDIUMTEXT NOT NULL,
     createdAt BIGINT NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE skillTreeEntries (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    skillTreeId BIGINT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    content MEDIUMTEXT DEFAULT NULL,
+    contentStatus ENUM('NONE', 'GENERATING', 'GENERATED') DEFAULT 'NONE' NOT NULL,
+    createdAt BIGINT NOT NULL,
+    FOREIGN KEY (skillTreeId) REFERENCES skillTrees(id)
 ) ENGINE = InnoDB;
 
 CREATE TABLE skillTreeQuestions (

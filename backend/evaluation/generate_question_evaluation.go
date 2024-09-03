@@ -20,7 +20,7 @@ func NewGenerateQuestionEvaluation(log logrus.FieldLogger, e Evaluator) *Generat
 }
 
 func (e *GenerateQuestionEvaluation) CreateChoiceQuestion(topic string) (*Question, error) {
-	result, err := e.e.Completion("indoprog-q", llm.CompletionOptions{
+	result, err := e.e.Completion(llm.Indoprog, llm.CompletionOptions{
 		Prompt: prompts.Format(prompts.GenerateChoiceQuestionPrompt, map[string]string{"topic": topic}),
 	})
 	if err != nil {

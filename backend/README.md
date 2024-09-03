@@ -247,3 +247,62 @@ interface ChatConversation {
   title: string;
 }
 ```
+
+
+### `GET` /tree
+**[Authentication is required]**
+
+Get the tree structure of the user's skill tree.
+
+Response:
+```ts
+interface Tree {
+    ready: boolean;
+    skillTree: {
+        id: number;
+        isRoot: boolean;
+        name: string;
+        entries: {
+            title: string;
+            description: string;
+        }[];
+        finished: boolean;
+        child: int[];
+    }[];
+}
+```
+
+### `GET` /tree/:id/questions
+**[Authentication is required]**
+
+Get the tree structure of the user's skill tree.
+
+Response:
+```ts
+interface Tree {
+  ready: boolean;
+  questions?: {
+    id: number;
+    content: string;
+    choices: string[];
+    userAnswer?: number;
+
+    // if skillTree.finished = true
+    correctAnswer?: number;
+    answerExplanation?: string;
+  }[];
+}
+```
+
+### `GET` /tree/:id/content?entry=id
+**[Authentication is required]**
+
+Get the content of the skill tree entry.
+
+Response:
+```ts
+interface LearnContent {
+    ready: boolean;
+    content?: string;
+}
+```

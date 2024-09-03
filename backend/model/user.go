@@ -12,6 +12,13 @@ const (
 	InterviewQuestionStatusQuestionsFinished = "SUCCESS"
 )
 
+const (
+	SkillTreeStatusNotStarted = "NOT_STARTED"
+	SkillTreeStatusNotReady   = "NOT_READY"
+	SkillTreeStatusInProgress = "IN_PROGRESS"
+	SkillTreeStatusFinished   = "SUCCESS"
+)
+
 type User struct {
 	ID                                   int64   `db:"id"`
 	Name                                 string  `db:"name"`
@@ -19,6 +26,7 @@ type User struct {
 	InterviewQuestionStatusLastUpdatedAt int64   `db:"interviewQuestionStatusLastUpdatedAt"`
 	SkillDescription                     string  `db:"skillDescription"`
 	SkillInfo_                           *string `db:"skillInfo"`
+	SkillTreeStatus                      string  `db:"skillTreeStatus"`
 	FilledSkillInfo                      bool    `db:"filledSkillInfo"`
 
 	// Topics_ is a || separated string
