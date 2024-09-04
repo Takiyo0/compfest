@@ -1,17 +1,28 @@
 package model
 
+import "encoding/json"
+
 const (
 	SkillTreeContentStatusNone       = "NONE"
 	SkillTreeContentStatusGenerating = "GENERATING"
 	SkillTreeContentStatusGenerated  = "GENERATED"
 )
 
+const (
+	SkillTreeQuestionStatusNotStarted = "NOT_STARTED"
+	SkillTreeQuestionStatusGenerating = "GENERATING"
+	SkillTreeQuestionStatusInProgress = "IN_PROGRESS"
+	SkillTreeQuestionStatusFinished   = "FINISHED"
+)
+
 type SkillTree struct {
 	Id                 int64  `db:"id"`
 	Title              string `db:"title"`
 	UserId             int64  `db:"userId"`
+	IsRoot             bool   `db:"isRoot"`
+	Finished           bool   `db:"finished"`
 	ChildSkillTreeIds_ string `db:"childSkillTreeIds"`
-	IsQuestionsReady   bool   `db:"isQuestionsReady"`
+	QuestionStatus     string `db:"questionStatus"`
 	CreatedAt          int64  `db:"createdAt"`
 }
 
@@ -29,7 +40,17 @@ type SkillTreeQuestion struct {
 	Content       string `db:"content"`
 	Choices_      string `db:"choices"`
 	CorrectChoice int    `db:"correctChoice"`
+	UserAnswer    *int   `db:"userAnswer"`
+	Explanation   string `db:"explanation"`
 	CreatedAt     int64  `db:"createdAt"`
+}
+
+func (s *SkillTreeQuestion) Choices() ([]string, error) {
+	var ret []string
+	if err := json.Unmarshal([]byte(s.Choices_), &ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 type SkillTreeEntry struct {

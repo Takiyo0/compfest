@@ -13,7 +13,7 @@ RUN rm go1.22.6.linux-amd64.tar.gz
 
 RUN echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
 
-RUN git clone https://github.com/takiyo0/compfest ./compfest
+RUN git clone git@github.com:takiyo0/compfest ./compfest
 
 WORKDIR /backend-build/compfest
 

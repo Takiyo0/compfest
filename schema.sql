@@ -38,7 +38,9 @@ CREATE TABLE skillTrees (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     userId BIGINT NOT NULL,
     childSkillTreeIds TEXT NOT NULL COMMENT 'comma separated list of skill tree ids',
-    isQuestionsReady BOOLEAN NOT NULL DEFAULT FALSE,
+    questionStatus ENUM ('NOT_STARTED', 'GENERATING', 'IN_PROGRESS', 'SUCCESS') DEFAULT 'NOT_STARTED' NOT NULL,
+    finished BOOLEAN NOT NULL DEFAULT FALSE,
+    isRoot BOOLEAN NOT NULL DEFAULT FALSE,
     createdAt BIGINT NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id)
 ) ENGINE = InnoDB;
@@ -60,7 +62,8 @@ CREATE TABLE skillTreeQuestions (
     content MEDIUMTEXT NOT NULL,
     choices MEDIUMTEXT NOT NULL,
     correctChoice INT NOT NULL,
-    userAnswer INT NOT NULL,
+    userAnswer INT,
+    explanation TEXT NOT NULL,
     createdAt BIGINT NOT NULL,
     FOREIGN KEY (skillTreeId) REFERENCES skillTrees(id)
 ) ENGINE = InnoDB;

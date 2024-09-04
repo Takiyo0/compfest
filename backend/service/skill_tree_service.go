@@ -1,7 +1,9 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/module/random"
@@ -31,17 +33,25 @@ func (s *SkillTreeService) SetUserService(userService *UserService) {
 	s.userService = userService
 }
 
-func (s *SkillTreeService) CreateSkillTree(user model.User) error {
+func (s *SkillTreeService) GetSkillTree(user model.User) ([]model.SkillTree, error) {
 	if user.InterviewQuestionStatus != model.InterviewQuestionStatusQuestionsFinished {
-		return errors.New("user interview question status is not finished")
+		return nil, errors.New("user interview question status is not finished")
 	}
 
-	if user.SkillTreeStatus != model.SkillTreeStatusNotStarted {
-		return errors.New("user skill tree has been generated or in progress")
+	if user.SkillTreeStatus == model.SkillTreeContentStatusGenerating {
+		return nil, errors.New("generating")
+	}
+
+	if user.SkillTreeStatus == model.SkillTreeContentStatusGenerated {
+		skillTrees, err := s.skillTreeRepository.FindByUserId(user.ID)
+		if err != nil {
+			return nil, err
+		}
+		return skillTrees, nil
 	}
 
 	if err := s.userService.SetSkillTreeStatus(user.ID, model.SkillTreeStatusNotReady); err != nil {
-		return err
+		return nil, err
 	}
 
 	go func() {
@@ -73,6 +83,7 @@ func (s *SkillTreeService) CreateSkillTree(user model.User) error {
 		}
 
 		// TODO: order correctly!
+		mappedSkillTree[0].IsRoot = true
 		for i := 1; i < len(mappedSkillTree); i++ {
 			mappedSkillTree[i-1].ChildSkillTreeIds_ = strconv.Itoa(int(mappedSkillTree[i].Id))
 		}
@@ -84,5 +95,118 @@ func (s *SkillTreeService) CreateSkillTree(user model.User) error {
 		}
 	}()
 
-	return nil
+	return nil, errors.New("generating")
+}
+
+func (s *SkillTreeService) GetSkillTreeEntries(skillTreeId int64) ([]model.SkillTreeEntry, error) {
+	entries, err := s.skillTreeRepository.FindEntriesBySkillTreeId(skillTreeId)
+	if err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+func (s *SkillTreeService) GetSkillTreeQuestions(skillTreeId int64) ([]model.SkillTreeQuestion, error) {
+	skillTree, err := s.skillTreeRepository.FindById(skillTreeId)
+	if err != nil {
+		return nil, err
+	}
+
+	if skillTree.QuestionStatus == model.SkillTreeQuestionStatusGenerating {
+		return nil, errors.New("generating")
+	}
+
+	if skillTree.QuestionStatus == model.SkillTreeQuestionStatusInProgress || skillTree.QuestionStatus == model.SkillTreeQuestionStatusFinished {
+		questions, err := s.skillTreeRepository.GetSkillTreeQuestions(skillTreeId)
+		if err != nil {
+			return nil, err
+		}
+
+		return questions, nil
+	}
+
+	if err := s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusGenerating); err != nil {
+		return nil, err
+	}
+
+	go func() {
+		skillTreeEntries, err := s.GetSkillTreeEntries(skillTreeId)
+		if err != nil {
+			_ = s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusNotStarted)
+			s.log.WithError(err).Error("failed to get skill tree entries")
+			return
+		}
+
+		mappedQuestions := make([]model.SkillTreeQuestion, 0, len(skillTreeEntries))
+
+		for _, entry := range skillTreeEntries {
+			topic := fmt.Sprintf("%s: %s", skillTree.Title, entry.Title)
+			questions, err := s.llmService.CreateQuestions(topic, 1)
+			if err != nil {
+				_ = s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusNotStarted)
+				s.log.WithError(err).Error("failed to create questions")
+				return
+			}
+
+			firstQ := questions[0]
+
+			encodedChoices, err := json.Marshal(firstQ.Choices)
+			if err != nil {
+				_ = s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusNotStarted)
+				s.log.WithError(err).Error("failed to encode choices")
+				return
+			}
+
+			mappedQuestions = append(mappedQuestions, model.SkillTreeQuestion{
+				SkillTreeId:   skillTreeId,
+				Content:       firstQ.Content,
+				Choices_:      string(encodedChoices),
+				CorrectChoice: firstQ.CorrectChoice,
+				Explanation:   firstQ.AnswerExplanation,
+				CreatedAt:     time.Now().Unix(),
+			})
+		}
+
+		if err := s.skillTreeRepository.BulkCreateQuestions(mappedQuestions); err != nil {
+			_ = s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusNotStarted)
+			s.log.WithError(err).Error("failed to insert questions")
+			return
+		}
+
+		_ = s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusInProgress)
+	}()
+
+	return nil, errors.New("generating")
+}
+
+func (s *SkillTreeService) AnswerQuestion(userId, questionId int64, choice int) error {
+	question, err := s.skillTreeRepository.FindQuestionById(questionId)
+	if err != nil {
+		return err
+	}
+
+	skillTree, err := s.skillTreeRepository.FindById(question.SkillTreeId)
+	if err != nil {
+		return err
+	}
+
+	if skillTree.UserId != userId {
+		return errors.New("invalid user")
+	}
+
+	if question.UserAnswer != nil {
+		return errors.New("question already answered")
+	}
+
+	choices, err := question.Choices()
+	if err != nil {
+		return err
+	}
+
+	if choice < 0 || choice >= len(choices) {
+		return errors.New("invalid choice")
+	}
+
+	return s.skillTreeRepository.SetSkillTreeQuestionUserAnswer(questionId, choice)
 }

@@ -45,7 +45,45 @@ func (r *SkillTreeRepository) BulkCreate(skillTrees []model.SkillTree) error {
 		if skillTree.Id != 0 {
 			id = &skillTree.Id
 		}
-		values = append(values, []any{id, skillTree.UserId, skillTree.ChildSkillTreeIds_, skillTree.CreatedAt})
+		values = append(values, []any{id, skillTree.UserId, skillTree.IsRoot, skillTree.ChildSkillTreeIds_, skillTree.CreatedAt})
 	}
-	return database.BulkInsert(r.db, "skillTrees", []string{"id", "userId", "childSkillTreeIds", "createdAt"}, values)
+	return database.BulkInsert(r.db, "skillTrees", []string{"id", "userId", "isRoot", "childSkillTreeIds", "createdAt"}, values)
+}
+
+func (r *SkillTreeRepository) GetSkillTreeQuestions(skillTreeId int64) ([]model.SkillTreeQuestion, error) {
+	var questions []model.SkillTreeQuestion
+	if err := r.db.Select(&questions, "SELECT * FROM skillTreeQuestions WHERE skillTreeId = ?", skillTreeId); err != nil {
+		return nil, err
+	}
+	return questions, nil
+}
+
+func (r *SkillTreeRepository) BulkCreateQuestions(questions []model.SkillTreeQuestion) error {
+	values := make([][]any, 0)
+	for _, question := range questions {
+		var id *int64
+		if question.Id != 0 {
+			id = &question.Id
+		}
+		values = append(values, []any{id, question.SkillTreeId, question.Content, question.Choices_, question.CorrectChoice, question.Explanation, question.CreatedAt})
+	}
+	return database.BulkInsert(r.db, "skillTreeQuestions", []string{"id", "skillTreeId", "content", "choices", "correctChoice", "explanation", "createdAt"}, values)
+}
+
+func (r *SkillTreeRepository) SetSkillTreeQuestionStatus(id int64, status string) error {
+	_, err := r.db.Exec("UPDATE skillTrees SET questionStatus = ? WHERE id = ?", status, id)
+	return err
+}
+
+func (r *SkillTreeRepository) SetSkillTreeQuestionUserAnswer(questionId int64, answer int) error {
+	_, err := r.db.Exec("UPDATE skillTreeQuestions SET userAnswer = ? WHERE id = ?", answer, questionId)
+	return err
+}
+
+func (r *SkillTreeRepository) FindQuestionById(id int64) (*model.SkillTreeQuestion, error) {
+	var question model.SkillTreeQuestion
+	if err := r.db.Get(&question, "SELECT * FROM skillTreeQuestions WHERE id = ?", id); err != nil {
+		return nil, err
+	}
+	return &question, nil
 }
