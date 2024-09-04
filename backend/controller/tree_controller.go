@@ -20,13 +20,15 @@ func (c *SkillTreeController) SetUp(e *echo.Echo) {
 	authGate := gate.Auth(c.userService)
 
 	g := e.Group("/tree", authGate)
+	g.GET("/archive", c.handleGetArchive)
 	g.GET("/", c.handleGetSkillTree)
 
 	gt := g.Group("/:id")
 	gt.GET("/questions", c.handleGetQuestions)
-	gt.POST("/questions", c.handleSubmitAnswer)
+	gt.POST("/questions", c.handleAnswerQuestion)
 	gt.GET("/content", c.handleGetSkillTreeEntryContent)
-	gt.POST("/answer-question", c.handleSubmitAnswer)
+	gt.POST("/answer-question", c.handleAnswerQuestion)
+	gt.POST("/finish", c.handleFinish)
 }
 
 func (c *SkillTreeController) handleGetSkillTree(ctx echo.Context) error {
@@ -140,7 +142,7 @@ func (c *SkillTreeController) handleGetQuestions(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, resType{Ready: true, Questions: questionsResp})
 }
 
-func (c *SkillTreeController) handleSubmitAnswer(ctx echo.Context) error {
+func (c *SkillTreeController) handleAnswerQuestion(ctx echo.Context) error {
 	type reqType struct {
 		QuestionID int64 `json:"questionId" validate:"required"`
 		Answer     int   `json:"answer" validate:"required"`
@@ -168,6 +170,56 @@ func (c *SkillTreeController) handleGetSkillTreeEntryContent(ctx echo.Context) e
 		return err
 	}
 
-	// TODO:
-	return nil
+	type respType struct {
+		Ready   bool   `json:"ready"`
+		Content string `json:"content,omitempty"`
+	}
+
+	content, err := c.skillTreeService.GetSkillTreeEntryContent(req.EntryID)
+	if err != nil {
+		if err.Error() == "generating" {
+			return ctx.JSON(http.StatusOK, &respType{Ready: false, Content: ""})
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, &respType{Ready: true, Content: *content})
+}
+
+func (c *SkillTreeController) handleGetArchive(ctx echo.Context) error {
+	ret, err := c.skillTreeService.GetAllFinishedQuestions(Sess(ctx).UserId)
+	if err != nil {
+		return err
+	}
+
+	type questionRespType struct {
+		Id                int64    `json:"id"`
+		Content           string   `json:"content"`
+		Choices           []string `json:"choices"`
+		UserAnswer        *int     `json:"userAnswer"`
+		CorrectAnswer     int      `json:"correctAnswer"`
+		AnswerExplanation string   `json:"answerExplanation"`
+	}
+
+	mappedQuestions := make([]questionRespType, 0, len(ret))
+	for _, q := range ret {
+		choices, err := q.Choices()
+		if err != nil {
+			return err
+		}
+
+		mappedQuestions = append(mappedQuestions, questionRespType{
+			Id:                q.Id,
+			Content:           q.Content,
+			Choices:           choices,
+			UserAnswer:        q.UserAnswer,
+			CorrectAnswer:     q.CorrectChoice,
+			AnswerExplanation: q.Explanation,
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]any{"questions": mappedQuestions})
+}
+
+func (c *SkillTreeController) handleFinish(ctx echo.Context) error {
+	return c.skillTreeService.SetFinished(Sess(ctx).UserId)
 }

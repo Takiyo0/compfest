@@ -210,3 +210,45 @@ func (s *SkillTreeService) AnswerQuestion(userId, questionId int64, choice int) 
 
 	return s.skillTreeRepository.SetSkillTreeQuestionUserAnswer(questionId, choice)
 }
+
+func (s *SkillTreeService) GetAllFinishedQuestions(userId int64) ([]model.SkillTreeQuestion, error) {
+	questions, err := s.skillTreeRepository.GetAllFinishedSkillTreeQuestions(userId)
+	if err != nil {
+		return nil, err
+	}
+	return questions, nil
+}
+
+func (s *SkillTreeService) GetSkillTreeEntryContent(skillTreeEntryId int64) (*string, error) {
+	skillTreeEntry, err := s.skillTreeRepository.FindSkillTreeEntryById(skillTreeEntryId)
+	if err != nil {
+		return nil, err
+	}
+
+	switch skillTreeEntry.ContentStatus {
+	case model.SkillTreeContentStatusNone:
+		if err := s.skillTreeRepository.SetSkillTreeEntryContentStatus(skillTreeEntryId, model.SkillTreeContentStatusGenerating); err != nil {
+			return nil, err
+		}
+		go func() {
+			content, err := s.llmService.GenerateSkillTreeEntryContent(*skillTreeEntry)
+			if err != nil {
+				s.log.WithError(err).Error("failed to generate skill tree entry content")
+				_ = s.skillTreeRepository.SetSkillTreeEntryContentStatus(skillTreeEntryId, model.SkillTreeContentStatusNone)
+				return
+			}
+			_ = s.skillTreeRepository.SetSkillTreeEntryContentStatusAndContent(skillTreeEntryId, model.SkillTreeContentStatusGenerated, &content)
+		}()
+		return nil, errors.New("generating")
+	case model.SkillTreeContentStatusGenerating:
+		return nil, errors.New("generating")
+	case model.SkillTreeContentStatusGenerated:
+		return skillTreeEntry.Content, nil
+	}
+
+	return nil, errors.New("invalid skill tree entry content status")
+}
+
+func (s *SkillTreeService) SetFinished(id int64) error {
+	return s.skillTreeRepository.SetFinished(id)
+}

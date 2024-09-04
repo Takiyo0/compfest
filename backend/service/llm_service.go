@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/takiyo0/compfest/backend/evaluation"
 	"github.com/takiyo0/compfest/backend/llm"
+	"github.com/takiyo0/compfest/backend/model"
 	"strings"
 )
 
@@ -112,4 +113,9 @@ func (s *LLMService) GenerateSkillTree(topics []string) ([]evaluation.SkillTree,
 		}
 	}
 	return skillTrees, nil
+}
+
+func (s *LLMService) GenerateSkillTreeEntryContent(skillTreeEntry model.SkillTreeEntry) (string, error) {
+	evaluator := evaluation.NewSkillTreeEvaluation(s.log, s.llm)
+	return evaluator.CreateSkillTreeEntryContent(skillTreeEntry.Title, skillTreeEntry.Description)
 }

@@ -87,3 +87,34 @@ func (r *SkillTreeRepository) FindQuestionById(id int64) (*model.SkillTreeQuesti
 	}
 	return &question, nil
 }
+
+func (r *SkillTreeRepository) GetAllFinishedSkillTreeQuestions(userId int64) ([]model.SkillTreeQuestion, error) {
+	var questions []model.SkillTreeQuestion
+	if err := r.db.Select(&questions, "SELECT * FROM skillTreeQuestions WHERE skillTreeId IN (SELECT * FROM skillTrees WHERE userId = ? AND finished = 1)", userId); err != nil {
+		return nil, err
+	}
+	return questions, nil
+}
+
+func (r *SkillTreeRepository) FindSkillTreeEntryById(skillTreeEntryId int64) (*model.SkillTreeEntry, error) {
+	var ret model.SkillTreeEntry
+	if err := r.db.Get(&ret, "SELECT * FROM skillTreeEntries WHERE id = ?", skillTreeEntryId); err != nil {
+		return nil, err
+	}
+	return &ret, nil
+}
+
+func (r *SkillTreeRepository) SetSkillTreeEntryContentStatus(skillTreeEntryId int64, status string) error {
+	_, err := r.db.Exec("UPDATE skillTreeEntries SET contentStatus = ? WHERE id = ?", status, skillTreeEntryId)
+	return err
+}
+
+func (r *SkillTreeRepository) SetSkillTreeEntryContentStatusAndContent(skillTreeEntryId int64, status string, content *string) error {
+	_, err := r.db.Exec("UPDATE skillTreeEntries SET contentStatus = ?, content = ? WHERE id = ?", status, content, skillTreeEntryId)
+	return err
+}
+
+func (r *SkillTreeRepository) SetFinished(skillTreeId int64) error {
+	_, err := r.db.Exec("UPDATE skillTrees SET finished = 1 WHERE id = ?", skillTreeId)
+	return err
+}

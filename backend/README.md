@@ -306,3 +306,22 @@ interface LearnContent {
     content?: string;
 }
 ```
+
+### `GET` /tree/archive
+**[Authentication is required]**
+ 
+Get all questions in the finished skill tree.
+
+Response:
+```ts
+interface Archive {
+    questions?: {
+        id: number;
+        content: string;
+        choices: string[];
+        userAnswer?: number;
+        correctAnswer: number;
+        answerExplanation: string;
+    }[];
+}
+```

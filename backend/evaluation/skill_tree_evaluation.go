@@ -40,3 +40,15 @@ func (e *SkillTreeEvaluation) CreateSkillTree(topic string) (*SkillTree, error) 
 		Entries:  entries,
 	}, nil
 }
+
+func (e *SkillTreeEvaluation) CreateSkillTreeEntryContent(title string, description string) (string, error) {
+	result, err := e.e.Completion(llm.Indoprog, llm.CompletionOptions{
+		Prompt: prompts.Format(prompts.GenerateSkillTreeEntryContent, map[string]string{"title": title, "description": description}),
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return result, nil
+}
