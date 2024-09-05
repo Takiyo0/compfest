@@ -281,7 +281,7 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
     return <>
         <Header userInfo={userData} center={true}/>
         <main
-            className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.style}>
+            className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.className}>
             <div className={"flex flex-col gap-10 mt-10 w-[800px] max-w-[90vw]"}>
                 {questions.map((data, index) => {
                     const type = data.answerType;
