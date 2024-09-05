@@ -19,12 +19,21 @@ const manrope = Manrope({subsets: ["latin"]});
 
 export default function Chat({userInfo}: { userInfo: any }) {
     const [width, height] = useWindowSize();
+export default function Chat({userInfo, baseTopics, baseMessages}: {
+    userInfo: UserInfoResponse['data'],
+    baseTopics: ChatTopicResponse['data'],
+    baseMessages?: ChatMessagesResponse['data']
+}) {
+    const router = useRouter();
     const [input, setInput] = React.useState("");
-    const [topicData, setTopicData] = React.useState<ChatTopic[]>([]); // {id: number, title: string}[]
-    const [topicId, setTopicId] = React.useState(6); // id number
-    const [chats, setChats] = React.useState<ChatMessage[]>([]); // {id: number, role: 'ASSISTANT' | 'USER', content: string, createdAt: number}[]
+    const [topicData, setTopicData] = React.useState<ChatTopic[]>(baseTopics); // {id: number, title: string}[]
+    const [topicId, setTopicId] = React.useState(baseTopics.length > 0 ? baseTopics[0].id : -1); // id number
+    const [chats, setChats] = React.useState<ChatMessage[]>(baseMessages != undefined ? baseMessages.map(x => ({
+        ...x,
+        waiting: false
+    })) : []); // {id: number, role: 'ASSISTANT' | 'USER', content: string, createdAt: number}[]
     const [isGenerating, setIsGenerating] = React.useState(false);
-    const [chatLoading, setChatLoading] = React.useState(true);
+    const [chatLoading, setChatLoading] = React.useState(false);
     const [error, setError] = React.useState("");
     const [navOpen, cycleNavOpen] = useCycle(-320, 0);
 
@@ -47,6 +56,7 @@ export default function Chat({userInfo}: { userInfo: any }) {
     }
 
     function CreateNewChat() {
+        if (topicId == -1) return;
         controller.current.abort();
         controller.current = new AbortController();
         setTopicId(-1);
@@ -61,7 +71,6 @@ export default function Chat({userInfo}: { userInfo: any }) {
         if (topicId == -1) {
             const {data, statusCode} = await ApiManager.CreateChatTopic(controller.current.signal, Authorization ?? "");
             if (statusCode != 200) return setError("Unable to create chat");
-            console.log(data);
             isNewChat.current = true;
             setTopicData(x => {
                 x.unshift({id: data.chatId, title: "New Chat"});
@@ -69,7 +78,6 @@ export default function Chat({userInfo}: { userInfo: any }) {
             });
             setTopicId(data.chatId);
             newTopicId = data.chatId;
-            console.log(newTopicId)
         }
 
         setInput("");
@@ -112,8 +120,9 @@ export default function Chat({userInfo}: { userInfo: any }) {
         } = await ApiManager.GetChatMessages(controller.current.signal, Authorization ?? "", id ?? topicId);
         if (statusCode == 200) {
             setChats((data ?? []) as ChatMessage[]);
-            setChatLoading(false);
         }
+
+        setChatLoading(false);
         console.log(statusCode);
     }
 
@@ -122,6 +131,8 @@ export default function Chat({userInfo}: { userInfo: any }) {
             isNewChat.current = false;
             return console.log("skipped")
         }
+        if (id == topicId) return;
+
         console.log("changing topic");
         controller.current.abort();
         controller.current = new AbortController();
