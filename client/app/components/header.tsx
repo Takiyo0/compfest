@@ -4,28 +4,35 @@ import Image from "next/image";
 import {LogoComponent} from "@/app/assets/images/logo";
 import {Dropdown, DropdownItem, DropdownMenu, DropdownTrigger} from "@nextui-org/react";
 import {User} from "@nextui-org/user";
+import {useWindowSize} from "@react-hook/window-size";
 
 export default function Header({userInfo, center = false}: { userInfo: any, center?: boolean }) {
+    const [width] = useWindowSize();
     return (
         <div
             className={
-                "blue-palette header w-[95vw] max-w-[70rem] z-50 mt-7 h-14 bg-gradient-to-r from-[#4a4a98] via-[#5252b9] to-[#9d9dd8] backdrop-blur-3xl pl-5 pr-5 flex items-center fixed z-10 rounded-full shadow-lg shadow-[#00000033] " +
+                "blue-palette header w-[95vw] max-w-[70rem] z-50 mt-7 h-14 bg-gradient-to-r from-[#4a4a98] via-[#5252b9] to-[#9d9dd8] backdrop-blur-3xl pl-5 pr-5 flex items-center fixed rounded-full shadow-lg shadow-[#00000033] " +
                 (center ? " left-1/2 -translate-x-1/2" : "")
             }
             style={{
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1), 0 20px 25px rgba(0, 0, 0, 0.1)"
+                ...{
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1), 0 20px 25px rgba(0, 0, 0, 0.1)"
+                }, ...width < 1024 ? {zoom: .9} : {}
             }}
         >
 
             <div className={"flex items-center justify-center"}>
-                <LogoComponent viewBox={"0 0 35 28"} className={"w-12 h-12 mx-auto"}/>
-                <h2 className={"text-2xl ml-2 font-semibold text-center text-white"}>Kuduga AI</h2>
+                <LogoComponent viewBox={"0 0 35 28"}
+                               className={width < 1024 ? "w-10 h-10 mx-auto" : "w-12 h-12 mx-auto"}/>
+                <h2 className={`text-${width < 1024 ? "xl" : "2xl"} ml-2 font-semibold text-center text-white`}>Kuduga
+                    AI</h2>
             </div>
             <Dropdown placement="bottom-start" className={"bg-primary-900"}>
                 <DropdownTrigger>
                     <User
                         as="button"
                         avatarProps={{
+                            className: width < 1024 ? "w-8 h-8" : "",
                             isBordered: true,
                             src: userInfo ? `https://avatars.githubusercontent.com/u/${userInfo.userId}?v=4&size=64` : undefined,
                         }}
