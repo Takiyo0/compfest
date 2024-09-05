@@ -26,6 +26,8 @@ body {
     /*  rgb(var(--background-start-rgb));*/
     /*background: radial-gradient(ellipse at 25% 0, rgb(1 0 77) 0%, rgb(3 1 65) 10%, rgb(2, 0, 21) 70%);*/
     /*background-position-x: -50%;*/
+    min-width: 100%;
+    min-height: 100%;
     background-color: #070b1c;
 }
 
@@ -128,30 +130,84 @@ div#wave .dot:nth-child(3) {
     fill: #777 !important;
 }
 
-@media only screen and (max-width: 600px) {
-    .home {
-        padding: 12px !important;
-        padding-top: 85px !important;
-        padding-bottom: 30px !important;
-    }
+/*@media only screen and (max-width: 600px) {*/
+/*    .home {*/
+/*        padding: 12px !important;*/
+/*        padding-top: 85px !important;*/
+/*        padding-bottom: 30px !important;*/
+/*    }*/
 
-    .home-nav {
-        position: absolute;
-        backdrop-filter: blur(15px);
-        left: 8px;
-    }
+/*    .home-nav {*/
+/*        position: absolute;*/
+/*        backdrop-filter: blur(15px);*/
+/*        left: 8px;*/
+/*    }*/
 
-    .archive-home {
-        padding: 8px !important;
-        padding-top: 85px !important;
-        padding-bottom: 30px !important;
-    }
+/*    .archive-home {*/
+/*        padding: 8px !important;*/
+/*        padding-top: 85px !important;*/
+/*        padding-bottom: 30px !important;*/
+/*    }*/
 
-    .archive h1 {
-        margin-left: 40px !important;
-    }
+/*    .archive h1 {*/
+/*        margin-left: 40px !important;*/
+/*    }*/
 
-    .archive div div p {
-        font-size: .8rem;
-    }
+/*    .archive div div p {*/
+/*        font-size: .8rem;*/
+/*    }*/
+/*}*/
+
+.ye {
+    height: calc(100vh - 300px);
+    overflow-y: auto;
+}
+
+.game-block {
+    margin: 0;
+    padding: 0;
+    width: 1.5em;
+    height: 1.5em;
+    border: 1px solid #ddd;
+}
+
+.piece-i {
+    background-color: #ec858b;
+}
+
+.piece-j {
+    background-color: #f1b598;
+}
+
+.piece-l {
+    background-color: #f8efae;
+}
+
+.piece-o {
+    background-color: #b5a677;
+}
+
+.piece-s {
+    background-color: #816e56;
+}
+
+.piece-t {
+    background-color: #b77c72;
+}
+
+.piece-z {
+    background-color: #e3be58;
+}
+
+.piece-preview {
+    background-color: #eee;
+}
+
+.full-w-footer {
+    height: calc(100vh - 256px) !important;
+}
+
+.button-click:active {
+    transform: scale(0.98);
+    filter: brightness(0.8);
 }
