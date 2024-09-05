@@ -3,7 +3,7 @@ import CryptoJS from "crypto-js";
 import {opt} from "ts-interface-checker";
 
 export class ApiManager {
-    public static BaseUrl = "https://b7be-180-244-132-141.ngrok-free.app";
+    public static BaseUrl = "https://c3ff-180-244-134-175.ngrok-free.app";
     public static encryptionKey = "bad7a50445665cb529f402ad7e78650cd9877725b8499e3597c6125e89f32766";
 
     public static async getUser(signal: AbortSignal, token: string): Promise<UserInfoResponse> {
@@ -30,8 +30,33 @@ export class ApiManager {
         return this.Get('user/questions/', signal, token);
     }
 
+    public static async SubmitInterview(signal: AbortSignal, token: string): Promise<BaseApiResponse> {
+        return this.Post('user/submit-interview', signal, token);
+    }
+
+    public static async SubmitTreeQuestion(signal: AbortSignal, token: string, questionId: string): Promise<BaseApiResponse> {
+        return this.Post(`tree/${questionId}/finish`, signal, token);
+    }
+
     public static async SendInterviewAnswer(signal: AbortSignal, token: string, questionId: number, answer: number): Promise<BaseApiResponse> {
         return this.Post(`user/questions/${questionId}/answer`, signal, token, {data: {answer}});
+    }
+
+    public static async SendTreeQuestionAnswer(signal: AbortSignal, token: string, questionId: number, answer: number): Promise<BaseApiResponse> {
+        return this.Post
+        (`tree/${questionId}/answer-question`, signal, token, {data: {questionId: questionId, answer}});
+    }
+
+    public static async GetTree(signal: AbortSignal, token: string): Promise<TreeResponse> {
+        return this.Get<TreeResponse>('tree/', signal, token);
+    }
+
+    public static async GetTreeQuestions(signal: AbortSignal, token: string, id: number) {
+        return this.Get<TreeQuestionsResponse>(`tree/${id}/questions`, signal, token);
+    }
+
+    public static async GetTreeEntryContent(signal: AbortSignal, token: string, treeId: number, entryId: number) {
+        return this.Get<TreeEntryResponse>(`tree/${treeId}/content?entryId=${entryId}`, signal, token);
     }
 
     private static async Post<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
@@ -92,7 +117,6 @@ export class ApiManager {
                     data: {} as T["data"]  // Empty data
                 } as T;
             }
-
             return {
                 statusCode: 500,
                 statusText: "Internal Server Error",
@@ -143,7 +167,8 @@ export interface UserInfoResponse extends BaseApiResponse {
         createdAt: number;
         skillDescription: string;
         doneInterview: boolean;
-        interviewQuestionStatus: string;
+        filledSkillInfo: boolean;
+        interviewQuestionStatus: 'NOT_STARTED' | 'IN_PROGRESS' | 'QUESTION_NOT_READY' | 'SUCCESS';
     }
 }
 
@@ -177,6 +202,50 @@ export interface InterviewQuestionsResponse extends BaseApiResponse {
             content: string;
             choices: string[];
             userAnswer?: number;
+
+            correctAnswer?: number;
+            answerExplanation?: string;
         }[];
+    }
+}
+
+export interface TreeResponse extends BaseApiResponse {
+    data: {
+        ready: boolean;
+        skillTree: {
+            id: number;
+            isRoot: boolean;
+            name: string;
+            entries: {
+                id: number;
+                title: string;
+                description: string;
+            }[];
+            finished: boolean;
+            child: number[];
+        }[];
+    }
+}
+
+export interface TreeQuestionsResponse extends BaseApiResponse {
+    data: {
+        ready: boolean;
+        questions?: {
+            id: number;
+            content: string;
+            choices: string[];
+            userAnswer?: number;
+
+            // if skillTree.finished = true
+            correctAnswer?: number;
+            answerExplanation?: string;
+        }[];
+    }
+}
+
+export interface TreeEntryResponse extends BaseApiResponse {
+    data: {
+        ready: boolean;
+        content?: string;
     }
 }
