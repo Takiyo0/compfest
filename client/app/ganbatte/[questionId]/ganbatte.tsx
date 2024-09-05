@@ -6,13 +6,20 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import {Radio, RadioGroup} from "@nextui-org/radio";
 import {Button} from "@nextui-org/react";
 import {GrFormPrevious} from "react-icons/gr";
-import {MdDone, MdOutlineNavigateNext} from "react-icons/md";
+import {MdDone, MdOutlineArrowBack, MdOutlineNavigateNext} from "react-icons/md";
 import React, {useEffect, useRef, useState} from "react";
 import {getCookie} from "cookies-next";
 import toast from "react-hot-toast";
 import {Manrope} from "next/font/google";
 import Header from "@/app/components/header";
 import {useRouter} from "next/navigation";
+import {FaHome} from "react-icons/fa";
+import {IoArrowBack} from "react-icons/io5";
+import {useWindowSize} from "@react-hook/window-size";
+import {useCycle, motion} from "framer-motion";
+import {LogoComponent} from "@/app/assets/images/logo";
+import Footer from "@/app/components/footer";
+import Tetris from "react-tetris";
 
 const manrope = Manrope({subsets: ["latin"]});
 
@@ -21,6 +28,8 @@ export default function GanbattePage({userData, questions, questionId}: {
     questions: TreeQuestionsResponse['data'],
     questionId: number
 }) {
+    const [width, height] = useWindowSize();
+    const [isOpen, cycleOpen] = useCycle(-270, 0);
     const router = useRouter();
     const [questionReady, setQuestionReady] = useState(questions.ready);
     const isFirst = useRef(true);
@@ -40,6 +49,13 @@ export default function GanbattePage({userData, questions, questionId}: {
 
     const controller = React.useRef(new AbortController);
     const authorization = getCookie("Authorization");
+
+    useEffect(() => {
+        return () => {
+            controller.current.abort();
+            if (interval.current) clearInterval(interval.current);
+        }
+    }, []);
 
     async function OnFinish() {
         await OnNext(currentQuestion, undefined, true);
@@ -68,7 +84,7 @@ export default function GanbattePage({userData, questions, questionId}: {
                     data,
                     statusCode
                 } = await ApiManager.GetTreeQuestions(controller.current.signal, authorization ?? "", questionId);
-                if (statusCode == 200) window.location.reload();
+                if (statusCode == 200 && data.ready) window.location.reload();
             }, 3000);
         }
         isFirst.current = false;
@@ -94,6 +110,8 @@ export default function GanbattePage({userData, questions, questionId}: {
         if (!skipNavigation) {
             if (targetQuestionIndex != undefined) setCurrentQuestion(targetQuestionIndex);
             else setCurrentQuestion(x => x + 1);
+
+            window.scrollTo(0, 0);
         }
     }
 
@@ -104,20 +122,35 @@ export default function GanbattePage({userData, questions, questionId}: {
     return <>
         <Header userInfo={userData} center={true}/>
         {!questionReady ?
-            <main className={"flex min-h-screen flex-col items-center justify-center p-24 " + manrope.className}>
+            <main
+                className={"blue-palette flex flex-col items-center justify-center p-24 full-w-footer " + manrope.className}>
                 <div className={"flex items-center flex-col"}>
                     <l-helix
                         size="200"
                         speed="2.5"
                         color="#84A1F5"/>
-                    <p className={"mt-7 text-2xl"}>Sedang menyiapkan pertanyaan... Estimasi waktu 1-2 menit.
+                    <p className={"mt-7 text-2xl"}>Sedang menyiapkan pertanyaan... Estimasi waktu 3-5 menit.
                         Harap menunggu</p>
                 </div>
             </main> : <main
-                className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.className}>
-                <div className={"mt-16 flex w-[98vw] max-w-[1200px]"}>
-                    <div
-                        className={"bg-[#5353534d] backdrop-blur-3xl w-48 p-1 pb-5 box-content rounded-xl h-fit"}>
+                className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.className + (width < 1024 ? " !p-3 !pt-14" : "")}>
+                <div className={"mt-16 flex w-full max-w-[1200px]"}>
+                    <motion.div
+                        className={"bg-[#5353534d] backdrop-blur-3xl w-64 p-1 pb-5 box-content rounded-xl h-fit " + (width < 1024 ? ` z-10 !fixed top-28 rounded-bl-none rounded-tl-none` : "")}
+                        initial={width < 1024 ? {left: isOpen} : {}}
+                        transition={{
+                            duration: .8,
+                            ease: [0.25, 0.8, 0.5, 1]
+                        }}
+                        animate={width < 1024 ? {left: isOpen} : {}}>
+                        {width < 1024 && <div className={"flex items-center absolute -right-12 top-5"}>
+                            <LogoComponent viewBox={"0 0 35 28"}
+                                           className={"w-12 h-12 pl-3 pr-2 rounded-tr-xl rounded-br-xl bg-[#5353534d] backdrop-blur-3xl"}
+                                           onClick={() => cycleOpen()}/>
+                        </div>}
+                        <Button startContent={<MdOutlineArrowBack size={20}/>} variant={"light"}
+                                onClick={(_ => router.back())}
+                                className={"-ml-3 mt-1"}>Kembali</Button>
                         <h2 className={"text-xl ml-[8px] mt-[3px] mb-[5px]"}>Pertanyaan</h2>
                         <Divider/>
                         <div className={"bg-transparent w-full flex flex-wrap justify-normal gap-1 p-2"}>
@@ -132,14 +165,16 @@ export default function GanbattePage({userData, questions, questionId}: {
                                 <div
                                     className={"w-10 h-12 invisible"} key={i}></div>)}
                         </div>
-                    </div>
-                    <div className={"w-full flex-1 min-h-32 bg-[#5353534d] ml-10 rounded-xl p-5 box-border"}>
+                    </motion.div>
+                    <div
+                        className={"w-full flex-1 min-h-32 bg-[#5353534d] ml-10 rounded-xl p-5 box-border " + (width < 1024 ? "!ml-0" : "")}
+                        style={width > 1024 ? {zoom: .9} : {}}>
                         <div>
                             <p className={"mb-3 text-xl"}>Pertanyaan {currentQuestion + 1}</p>
                             <hr/>
                             <MarkdownPreview source={questions.questions![currentQuestion].content.trim()}
                                              className={"mt-3"}
-                                             style={{backgroundColor: "transparent"}}/>
+                                             style={{backgroundColor: "transparent", color: "white"}}/>
                             <RadioGroup
                                 value={answers[currentQuestion].answer?.toString() ?? ''}
                                 isDisabled={submitting}
@@ -156,7 +191,7 @@ export default function GanbattePage({userData, questions, questionId}: {
                                     <div
                                         className={"flex items-center"}>{(k + 10).toString(36).toUpperCase()}. <MarkdownPreview
                                         className={"ml-2"}
-                                        style={{backgroundColor: "transparent"}}
+                                        style={{backgroundColor: "transparent", color: "white"}}
                                         source={x.trim()}/></div>
                                 </Radio>)}
                             </RadioGroup>
@@ -179,5 +214,6 @@ export default function GanbattePage({userData, questions, questionId}: {
                     </div>
                 </div>
             </main>}
+        <Footer/>
     </>
 }
