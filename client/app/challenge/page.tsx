@@ -13,7 +13,6 @@ export default async function ChallengePage() {
     console.log("parent challenge called")
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
-
     if (!user.userId) return redirect("/login");
     if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
     if (user.filledSkillInfo) return <ErrorPage message={"Anda sudah tidak bisa memilih opsi lagi disini"}
