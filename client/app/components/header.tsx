@@ -19,7 +19,7 @@ export default function Header({userInfo, center = false}: { userInfo: any, cent
 
             <div className={"flex items-center justify-center"}>
                 <LogoComponent viewBox={"0 0 35 28"} className={"w-12 h-12 mx-auto"}/>
-                <h2 className={"text-2xl ml-2 font-semibold text-center text-white"}>Konfig AI</h2>
+                <h2 className={"text-2xl ml-2 font-semibold text-center text-white"}>Kuduga AI</h2>
             </div>
             <Dropdown placement="bottom-start" className={"bg-primary-900"}>
                 <DropdownTrigger>
