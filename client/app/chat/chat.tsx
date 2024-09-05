@@ -208,52 +208,6 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
                     </Tabs>
                 </motion.div>
 
-            <div
-                className={"flex flex-col items-center justify-center bg-[#5353534d] ml-5 backdrop-blur-3xl w-full rounded-3xl p-7 box-border " + (width < 1024 ? "ml-0 !p-2" : "")}
-                style={width < 1024 ? {zoom: "79%"} : {}}>
-                <div
-                    className={"w-full h-12 bg-[#3d47a59c] rounded-2xl pl-3 pr-3 flex items-center " + (width < 1024 ? "ml-0 p-0" : "")}>
-                    <div className={"topic flex items-center"}>
-                        <MdChat size={26} className={"mr-2"}/>
-                        <h2 className={"text-[1.1rem]"}>({topicData?.find(x => x.id == topicId)?.id || "-"}) {topicData?.find(x => x.id == topicId)?.title || "New Chat"}</h2>
-                    </div>
-                    <div className={"status text-[0.9rem] text-zinc-400 ml-auto flex items-center"}>
-                        <div
-                            className={`w-2 h-2 rounded-full ${isGenerating ? "bg-yellow-500" : "bg-green-500"} mr-1`}></div>
-                        {isGenerating ? "generating" : "idle"}
-                    </div>
-                </div>
-                <div
-                    className={(chatLoading ? "items-center justify-center " : "") + "chat-parent flex-1 w-full max-w-[80%] overflow-x-hidden overflow-y-auto mt-5 pr-2 flex flex-col-reverse " + (width < 1024 ? "ml-0 p-0 max-w-full " : "")}>
-                    {chatLoading ? <Spinner size="lg"/> : chats.map((chat, index) => {
-                        const time = new Date(chat.created_at * 1000);
-                        return <div key={index}
-                                    className={"max-w-[70%] w-fit h-min flex items-end mb-5 relative " + (chat.role === "USER" ? "ml-auto " : "") + (width < 1024 ? "max-w-[80%] " : "")}>
-                            {chat.role === "ASSISTANT" &&
-                                <Avatar src={""} size={"md"} className={"mr-3 flex-shrink-0"}/>}
-                            <div
-                                className={"flex-1 h-min bg-[#8888883b] rounded-3xl flex items-center max-w-full " + (chat.role === "USER" ? "ml-auto user-bubble " : "bot-bubble ")}>
-                                {chat.waiting ? <div id="wave">
-                                    <span className="dot"></span>
-                                    <span className="dot"></span>
-                                    <span className="dot"></span>
-                                </div> : <div
-                                    className={"rounded-full bg-[#88888800] p-2 pl-4 pr-4 text-white text-[1rem] flex-1 max-w-[-webkit-fill-available] " + (chat.role === "USER" ? "text-right" : "")}>
-                                    <MarkdownPreview source={chat.content.trim()}
-                                                     style={{backgroundColor: "transparent"}}/>
-                                </div>}
-                                {/*<p*/}
-                                {/*    className={"rounded-full bg-[#88888800] p-2 pl-4 pr-4 text-white text-[1rem] " + (chat.role === "USER" ? "text-right" : "")}>*/}
-                                {/*    {chat.content}*/}
-                                {/*</p>*/}
-                            </div>
-                            {chat.role === "USER" && <Avatar src={""} size={"md"} className={"ml-3 flex-shrink-0"}/>}
-                            <p className={`absolute bottom-1 ${chat.role === "USER" ? "-left-10" : "-right-10"} text-[.8rem] text-neutral-400`}>
-                                {time.getHours().toLocaleString('en-US', {minimumIntegerDigits: 2})}:{time.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2})}
-                            </p>
-                        </div>
-                    })
-                    }
                 <div
                     className={"flex flex-col items-center justify-center bg-[#5353534d] ml-5 backdrop-blur-3xl w-full rounded-3xl p-7 box-border " + (width < 1024 ? "!ml-0 !p-2" : "")}
                     style={width < 1024 ? {zoom: .8} : {}}>
@@ -271,6 +225,13 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
                     </div>
                     <div
                         className={((chatLoading || !chatLoading && chats.length == 0) ? "items-center justify-center " : "") + "chat-parent flex-1 w-full max-w-[80%] overflow-x-hidden overflow-y-auto mt-5 pr-2 flex flex-col-reverse " + (width < 1024 ? "ml-0 p-0 max-w-full " : "")}>
+                        {!chatLoading && chats.length == 0 &&
+                            <div className={"flex flex-col items-center w-full max-w-72"}>
+                                <QuestionGraphics className={"w-72 h-72"}/>
+                                <p className={"text-center"}>Silahkan tanyakan pertanyaan apa saja terkait pemrograman
+                                    kepada
+                                    Kukira</p>
+                            </div>}
                         {chatLoading ? <Spinner size="lg"/> : chats.map((chat, index) => {
                             const time = new Date(chat.created_at * 1000);
                             return <div key={index}
