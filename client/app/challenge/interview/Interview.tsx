@@ -60,14 +60,19 @@ export default function ChallengeInterview({userData, questions}: {
     }, [questionReady]);
 
 
-        useEffect(() => {
-            async function getLoader() {
-                const {helix} = await import('ldrs')
-                helix.register()
-            }
+    useEffect(() => {
+        async function getLoader() {
+            const {helix} = await import('ldrs')
+            helix.register()
+        }
 
-            getLoader();
-        }, [])
+        getLoader();
+
+        return () => {
+            controller.current.abort();
+            if (interval.current) clearInterval(interval.current);
+        }
+    }, [])
 
     const abort = React.useRef(new AbortController);
     const authorization = getCookie("Authorization");
