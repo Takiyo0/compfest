@@ -9,7 +9,7 @@ export default function Header({userInfo, center = false}: { userInfo: any, cent
     return (
         <div
             className={
-                "blue-palette header w-[95vw] max-w-[70rem] mt-7 h-14 bg-gradient-to-r from-[#4a4a98] via-[#5252b9] to-[#9d9dd8] backdrop-blur-3xl pl-5 pr-5 flex items-center fixed z-10 rounded-full ml-20 mr-20 shadow-lg shadow-[#00000033] " +
+                "blue-palette header w-[95vw] max-w-[70rem] z-50 mt-7 h-14 bg-gradient-to-r from-[#4a4a98] via-[#5252b9] to-[#9d9dd8] backdrop-blur-3xl pl-5 pr-5 flex items-center fixed z-10 rounded-full shadow-lg shadow-[#00000033] " +
                 (center ? " left-1/2 -translate-x-1/2" : "")
             }
             style={{
