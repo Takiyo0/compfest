@@ -115,3 +115,43 @@ div#wave .dot:nth-child(3) {
 .menu::-webkit-scrollbar {
     width: 2px;
 }
+
+.rd3t-label__title {
+    fill: white !important;
+}
+
+.rd3t-link {
+    stroke: white !important;
+}
+
+.rd3t-leaf-node {
+    fill: #777 !important;
+}
+
+@media only screen and (max-width: 600px) {
+    .home {
+        padding: 12px !important;
+        padding-top: 85px !important;
+        padding-bottom: 30px !important;
+    }
+
+    .home-nav {
+        position: absolute;
+        backdrop-filter: blur(15px);
+        left: 8px;
+    }
+
+    .archive-home {
+        padding: 8px !important;
+        padding-top: 85px !important;
+        padding-bottom: 30px !important;
+    }
+
+    .archive h1 {
+        margin-left: 40px !important;
+    }
+
+    .archive div div p {
+        font-size: .8rem;
+    }
+}
