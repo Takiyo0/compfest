@@ -77,7 +77,7 @@ func (s *Server) Start() error {
 	s.addController(controller.NewAssistantController(assistantService, userService))
 	s.addController(controller.NewSkillTreeController(userService, skillTreeService))
 
-	return s.e.Start(":8085")
+	return s.e.Start(fmt.Sprintf(":%d", s.cfg.AppPort))
 }
 
 func (s *Server) addController(c controller.Controller) {

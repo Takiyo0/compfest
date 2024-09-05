@@ -10,6 +10,8 @@ import (
 type Config struct {
 	IsProduction bool `env:"IS_PRODUCTION"`
 
+	AppPort int `env:"APP_PORT" envDefault:"8085"`
+
 	Database DatabaseConfig
 	Oauth2   Oauth2Config
 
