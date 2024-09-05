@@ -10,10 +10,15 @@ import {ApiManager} from "@/app/managers/api";
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import {FaPencilAlt} from "react-icons/fa";
 import {IoIosCreate} from "react-icons/io";
+import {
+    useWindowSize
+} from '@react-hook/window-size'
+import {useCycle, motion} from "framer-motion";
 
 const manrope = Manrope({subsets: ["latin"]});
 
 export default function Chat({userInfo}: { userInfo: any }) {
+    const [width, height] = useWindowSize();
     const [input, setInput] = React.useState("");
     const [topicData, setTopicData] = React.useState<ChatTopic[]>([]); // {id: number, title: string}[]
     const [topicId, setTopicId] = React.useState(6); // id number
@@ -21,6 +26,7 @@ export default function Chat({userInfo}: { userInfo: any }) {
     const [isGenerating, setIsGenerating] = React.useState(false);
     const [chatLoading, setChatLoading] = React.useState(true);
     const [error, setError] = React.useState("");
+    const [navOpen, cycleNavOpen] = useCycle(-320, 0);
 
     let controller = React.useRef(new AbortController());
     const isNewChat = React.useRef(false);
@@ -29,7 +35,7 @@ export default function Chat({userInfo}: { userInfo: any }) {
 
 
     useEffect(() => {
-        // setCookie('Authorization', ApiManager.Encrypt("MTo3QldETlhjaTRuTERNa1huQWoyWThPelR6Qk53UjRyVXF4a05mS2tKTWJ1RlJ1MnJpRWZXeUFhRjJaY0pEUHJx"));
+        setCookie('Authorization', ApiManager.Encrypt("MTo3QldETlhjaTRuTERNa1huQWoyWThPelR6Qk53UjRyVXF4a05mS2tKTWJ1RlJ1MnJpRWZXeUFhRjJaY0pEUHJx"));
         fetchFirstData();
         return () => controller.current.abort();
     }, []);
@@ -126,24 +132,29 @@ export default function Chat({userInfo}: { userInfo: any }) {
         await GetAndParseMessages(true, id);
     }
 
-    // const {View} = useLottie({
-    //     animationData: loadingAnimation,
-    //     loop: true
-    // });
-    //
-    // const Loading = React.useMemo(() => <>{View}</>, [View]);
-
 
     return <main
-        className={"blue-palette w-screen h-screen pt-8 flex flex-col items-center overflow-x-hidden " + manrope.style}>
-        <div className={"flex-1 w-screen flex h-full pb-8 pl-5 pr-5"}>
+        className={"blue-palette w-screen h-screen pt-8 flex flex-col items-center overflow-x-hidden " + manrope.className}>
+        <div className={"flex-1 w-screen flex h-full pb-8 pl-5 pr-5 " + (width < 1024 ? `pl-1 pr-1 h-screen` : "")}>
 
-            <div
-                className={"flex flex-col bg-[#5353534d] backdrop-blur-3xl w-80 max-w-80 rounded-3xl pt-6 p-3 box-border"}>
-                <div className={"flex items-center"}>
+            <motion.div
+                className={"flex flex-col bg-[#5353534d] backdrop-blur-3xl w-80 max-w-80 rounded-3xl pt-6 p-3 box-border " + (width < 1024 ? `z-10 absolute rounded-bl-none rounded-tl-none` : "")}
+                initial={width < 1024 ? {left: navOpen} : {}}
+                transition={{
+                    duration: .8,
+                    ease: [0.25, 0.8, 0.5, 1]
+                }}
+                animate={width < 1024 ? {left: navOpen} : {}}>
+                {width >= 1024 && <div className={"flex items-center"}>
                     <LogoComponent viewBox={"0 0 35 28"} className={"w-14 h-14 mr-3"}/>
-                    <h2 className={"text-2xl font-semibold text-center"}>Konfig AI</h2>
-                </div>
+                    <h2 className={"text-2xl font-semibold text-center"}>Kuduga AI</h2>
+                </div>}
+                {width < 1024 && <div className={"flex items-center absolute -right-12"}>
+                    <h2 className={"text-2xl font-semibold text-center mr-3"}>Kuduga AI</h2>
+                    <LogoComponent viewBox={"0 0 35 28"}
+                                   className={"w-12 h-12 pl-3 pr-2 rounded-tr-xl rounded-br-xl bg-[#5353534d] backdrop-blur-3xl"}
+                                   onClick={() => cycleNavOpen()}/>
+                </div>}
                 {/*<h2 className={"text-xl font-semibold mt-4"}>Topics</h2>*/}
                 {/*{topicData.map((topic, index) => {*/}
                 {/*    return <Button radius="lg" key={index} disabled={topicId == topic.id}*/}
@@ -152,11 +163,11 @@ export default function Chat({userInfo}: { userInfo: any }) {
                 {/*        {topic.title} ({topic.id})*/}
                 {/*    </Button>*/}
                 {/*})}*/}
-                <Button color={"primary"} className={"mt-4 mb-4"} startContent={<IoIosCreate size={25}/>}
+                <Button color={"primary"} className={"mt-4 mb-4 " + (width < 1024 ? "mt-14" : "")}
+                        startContent={<IoIosCreate size={25}/>}
                         onClick={CreateNewChat}>
                     New Chat
                 </Button>
-                {topicId}
                 <Tabs aria-label="Options" color="primary" isVertical={true} variant={"light"} className={"w-full"}
                       selectedKey={topicId}
                       items={(topicId == -1 ? [{id: -1, title: "New Chat"}, ...topicData] : topicData)}
@@ -173,13 +184,16 @@ export default function Chat({userInfo}: { userInfo: any }) {
                         />
                     )}
                 </Tabs>
-            </div>
+            </motion.div>
+
             <div
-                className={"flex flex-col items-center justify-center bg-[#5353534d] ml-5 backdrop-blur-3xl w-full rounded-3xl p-7 box-border"}>
-                <div className={"w-full h-12 bg-[#3d47a59c] rounded-2xl pl-3 pr-3 flex items-center"}>
-                    <div className={"topic flex"}>
+                className={"flex flex-col items-center justify-center bg-[#5353534d] ml-5 backdrop-blur-3xl w-full rounded-3xl p-7 box-border " + (width < 1024 ? "ml-0 !p-2" : "")}
+                style={width < 1024 ? {zoom: "79%"} : {}}>
+                <div
+                    className={"w-full h-12 bg-[#3d47a59c] rounded-2xl pl-3 pr-3 flex items-center " + (width < 1024 ? "ml-0 p-0" : "")}>
+                    <div className={"topic flex items-center"}>
                         <MdChat size={26} className={"mr-2"}/>
-                        <h2 className={"text-[1.1rem]"}>({topicData.find(x => x.id == topicId)?.id || "-"}) {topicData.find(x => x.id == topicId)?.title || "New Chat"}</h2>
+                        <h2 className={"text-[1.1rem]"}>({topicData?.find(x => x.id == topicId)?.id || "-"}) {topicData?.find(x => x.id == topicId)?.title || "New Chat"}</h2>
                     </div>
                     <div className={"status text-[0.9rem] text-zinc-400 ml-auto flex items-center"}>
                         <div
@@ -188,15 +202,15 @@ export default function Chat({userInfo}: { userInfo: any }) {
                     </div>
                 </div>
                 <div
-                    className={(chatLoading ? "items-center justify-center " : "") + "chat-parent flex-1 w-full max-w-[80%] overflow-x-hidden overflow-y-auto mt-5 pr-2 flex flex-col-reverse"}>
+                    className={(chatLoading ? "items-center justify-center " : "") + "chat-parent flex-1 w-full max-w-[80%] overflow-x-hidden overflow-y-auto mt-5 pr-2 flex flex-col-reverse " + (width < 1024 ? "ml-0 p-0 max-w-full " : "")}>
                     {chatLoading ? <Spinner size="lg"/> : chats.map((chat, index) => {
                         const time = new Date(chat.created_at * 1000);
                         return <div key={index}
-                                    className={"max-w-[70%] w-fit h-min flex items-end mb-5 relative " + (chat.role === "USER" ? "ml-auto" : "")}>
+                                    className={"max-w-[70%] w-fit h-min flex items-end mb-5 relative " + (chat.role === "USER" ? "ml-auto " : "") + (width < 1024 ? "max-w-[80%] " : "")}>
                             {chat.role === "ASSISTANT" &&
                                 <Avatar src={""} size={"md"} className={"mr-3 flex-shrink-0"}/>}
                             <div
-                                className={"flex-1 h-min bg-[#8888883b] rounded-3xl flex items-center " + (chat.role === "USER" ? "ml-auto user-bubble" : "bot-bubble")}>
+                                className={"flex-1 h-min bg-[#8888883b] rounded-3xl flex items-center max-w-full " + (chat.role === "USER" ? "ml-auto user-bubble " : "bot-bubble ")}>
                                 {chat.waiting ? <div id="wave">
                                     <span className="dot"></span>
                                     <span className="dot"></span>
@@ -220,7 +234,8 @@ export default function Chat({userInfo}: { userInfo: any }) {
                     }
 
                 </div>
-                <div className={"mt-auto w-full max-w-[70%] h-14 bg-[#8888883b] rounded-full flex items-center"}>
+                <div
+                    className={"mt-auto w-full max-w-[70%] h-14 bg-[#8888883b] rounded-full flex items-center " + (width < 1024 ? "max-w-full" : "")}>
                     <input
                         type="text"
                         disabled={isGenerating}
