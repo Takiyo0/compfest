@@ -1,21 +1,24 @@
-import {Manrope} from "next/font/google";
 import {cookies} from "next/headers";
-import {getCookies, setCookie} from "cookies-next";
-import {ApiManager} from "@/app/managers/api"
+import {getCookie} from "cookies-next";
+import {ApiManager, ChatMessagesResponse} from "@/app/managers/api"
 import Chat from "@/app/chat/chat";
-
-
-const manrope = Manrope({subsets: ["latin"]});
+import {redirect} from "next/navigation";
+import ErrorPage from "@/app/components/pages/ErrorPage";
 
 export default async function Page() {
-    const testCookies = getCookies({cookies});
-    console.log(testCookies);
+    const controller = new AbortController();
+    const authorization = getCookie("Authorization", {cookies});
+    const {data: user, statusCode} = await ApiManager.getUser(controller.signal, authorization ?? "");
 
-    const abortion = new AbortController();
+    if (statusCode != 200 || !user.userId) return redirect("/login");
+    if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
 
-    const userInfo = await ApiManager.getUser(abortion.signal, "testing");
-    console.log(userInfo);
+    let {data, statusCode: code} = await ApiManager.GetChatTopics(controller.signal, authorization ?? "");
+    if (!Array.isArray(data) && code != 200) return <ErrorPage
+        message={"Unknown response from server is received. Please try again later"} errorCode={500}/>;
 
+    let messages: ChatMessagesResponse['data'] | undefined;
+    if (data.length) messages = await ApiManager.GetChatMessages(controller.signal, authorization ?? "", data[0].id).then(x => x.data).catch(() => undefined);
 
-    return <Chat userInfo={userInfo}/>
+    return <Chat userInfo={user} baseTopics={data} baseMessages={messages}/>
 }
