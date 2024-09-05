@@ -1,12 +1,16 @@
+'use client'
+
 import {UserInfoResponse} from "@/app/managers/api";
 import {Avatar, Button} from "@nextui-org/react";
 import {Manrope} from "next/font/google";
 import {FaGithubAlt} from "react-icons/fa";
 import {FaPencilAlt} from "react-icons/fa";
+import {useRouter} from "next/navigation";
 
 const manrope = Manrope({subsets: ["latin"]});
 
 export default function Challenge({userData}: { userData: UserInfoResponse['data'] }) {
+    const router = useRouter();
     function GetGreeting(): string {
         const currentHour = new Date().getHours();
 
@@ -21,17 +25,17 @@ export default function Challenge({userData}: { userData: UserInfoResponse['data
         }
     }
 
-    return <main className={"blue-palette min-w-screen min-h-screen flex flex-col items-center " + manrope.style}>
+    return <main className={"blue-palette min-w-screen min-h-screen flex flex-col items-center " + manrope.className}>
         <div className={"mt-20 flex flex-col items-center max-w-96"}>
             <Avatar src={`https://avatars.githubusercontent.com/u/${userData.userId}?v=4`} className={"w-44 h-44"}/>
             <p className={"p-0 mt-5 text-[1.5rem] flex flex-col items-center"}>{GetGreeting()}, <br/><a
                 className={"font-bold gradient-user-1"}> {userData.username}</a></p>
             <p className={"text-center mt-5"}>Silahkan pilih sumber info yang akan kami gunakan untuk membuat Skill Tree
                 Anda</p>
-            <Button startContent={<FaGithubAlt size={30}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"}>
+            <Button startContent={<FaGithubAlt size={30}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"} onClick={() => router.push("/idk")}>
                 gunakan profil GitHub
             </Button>
-            <Button startContent={<FaPencilAlt size={24}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"}>
+            <Button startContent={<FaPencilAlt size={24}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"} onClick={() => router.push("/challenge/description")}>
                 deskripsikan skill
             </Button>
         </div>
