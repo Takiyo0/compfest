@@ -13,8 +13,7 @@ type Config struct {
 	Database DatabaseConfig
 	Oauth2   Oauth2Config
 
-	IndoprogqUrl string `env:"INDOPROGQ_URL"`
-	IndoprogcUrl string `env:"INDOPROGC_URL"`
+	IndoprogUrl string `env:"INDOPROG_URL"`
 
 	CorsOrigin string `env:"CORS_ORIGIN"`
 }

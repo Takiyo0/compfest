@@ -37,6 +37,7 @@ CREATE TABLE interviewQuestions (
 CREATE TABLE skillTrees (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     userId BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
     childSkillTreeIds TEXT NOT NULL COMMENT 'comma separated list of skill tree ids',
     questionStatus ENUM ('NOT_STARTED', 'GENERATING', 'IN_PROGRESS', 'SUCCESS') DEFAULT 'NOT_STARTED' NOT NULL,
     finished BOOLEAN NOT NULL DEFAULT FALSE,

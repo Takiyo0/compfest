@@ -25,7 +25,6 @@ func (c *SkillTreeController) SetUp(e *echo.Echo) {
 
 	gt := g.Group("/:id")
 	gt.GET("/questions", c.handleGetQuestions)
-	gt.POST("/questions", c.handleAnswerQuestion)
 	gt.GET("/content", c.handleGetSkillTreeEntryContent)
 	gt.POST("/answer-question", c.handleAnswerQuestion)
 	gt.POST("/finish", c.handleFinish)
@@ -119,7 +118,7 @@ func (c *SkillTreeController) handleGetQuestions(ctx echo.Context) error {
 	questions, err := c.skillTreeService.GetSkillTreeQuestions(req.SkillTreeId)
 	if err != nil {
 		if err.Error() == "generating" {
-			return ctx.JSON(http.StatusOK, nil)
+			return ctx.JSON(http.StatusOK, &resType{Ready: false})
 		}
 		return err
 	}
@@ -139,7 +138,7 @@ func (c *SkillTreeController) handleGetQuestions(ctx echo.Context) error {
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, resType{Ready: true, Questions: questionsResp})
+	return ctx.JSON(http.StatusOK, &resType{Ready: true, Questions: questionsResp})
 }
 
 func (c *SkillTreeController) handleAnswerQuestion(ctx echo.Context) error {
@@ -221,5 +220,18 @@ func (c *SkillTreeController) handleGetArchive(ctx echo.Context) error {
 }
 
 func (c *SkillTreeController) handleFinish(ctx echo.Context) error {
-	return c.skillTreeService.SetFinished(Sess(ctx).UserId)
+	type reqType struct {
+		SkillTreeId int64 `param:"id" validate:"required"`
+	}
+
+	var req reqType
+	if err := BindAndValidate(ctx, &req); err != nil {
+		return err
+	}
+
+	if err := c.skillTreeService.SetFinished(Sess(ctx).UserId, req.SkillTreeId); err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, M("Finished"))
 }

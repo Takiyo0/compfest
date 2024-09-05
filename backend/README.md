@@ -294,6 +294,27 @@ interface Tree {
 }
 ```
 
+
+### `POST` /tree/:id/answer-question
+**[Authentication is required]**
+
+Answer the questions in the skill tree entry.
+
+Request:
+```ts
+interface AnswerQuestions {
+    questionId: number;
+    answer: number;
+}
+```
+
+Response:
+```ts
+interface AnswerQuestions {
+    message: string;
+}
+```
+
 ### `GET` /tree/:id/content?entry=id
 **[Authentication is required]**
 
@@ -310,6 +331,37 @@ interface LearnContent {
 ### `GET` /tree/archive
 **[Authentication is required]**
  
+Get all questions in the finished skill tree.
+
+Response:
+```ts
+interface Archive {
+    questions?: {
+        id: number;
+        content: string;
+        choices: string[];
+        userAnswer?: number;
+        correctAnswer: number;
+        answerExplanation: string;
+    }[];
+}
+```
+
+### `POST` /tree/:id/finish
+**[Authentication is required]**
+
+Finish the skill tree.
+
+Response:
+```ts
+interface FinishTree {
+    message: string;
+}
+```
+
+### `POST` /tree/archive
+**[Authentication is required]**
+
 Get all questions in the finished skill tree.
 
 Response:

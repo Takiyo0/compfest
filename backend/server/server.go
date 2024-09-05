@@ -33,8 +33,7 @@ func New(log logrus.FieldLogger, cfg config.Config) *Server {
 
 func (s *Server) Start() error {
 	s.ai = llm.New(map[string]string{
-		llm.IndoprogQ: s.cfg.IndoprogqUrl,
-		llm.IndoprogC: s.cfg.IndoprogcUrl,
+		llm.Indoprog: s.cfg.IndoprogUrl,
 	})
 
 	s.e = echo.New()
@@ -72,6 +71,7 @@ func (s *Server) Start() error {
 
 	skillTreeService := service.NewSkillTreeService(s.log, skillTreeRepository)
 	skillTreeService.SetLLMService(llmService)
+	skillTreeService.SetUserService(userService)
 
 	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
 	s.addController(controller.NewAssistantController(assistantService, userService))

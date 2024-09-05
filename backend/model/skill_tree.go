@@ -1,6 +1,10 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strconv"
+	"strings"
+)
 
 const (
 	SkillTreeContentStatusNone       = "NONE"
@@ -28,8 +32,13 @@ type SkillTree struct {
 
 func (m SkillTree) ChildSkillTreeIds() []int64 {
 	ids := make([]int64, 0)
-	for _, id := range m.ChildSkillTreeIds_ {
-		ids = append(ids, int64(id))
+	splits := strings.Split(m.ChildSkillTreeIds_, ",")
+	for _, id := range splits {
+		parsedId, _ := strconv.Atoi(id)
+		if parsedId == 0 {
+			continue
+		}
+		ids = append(ids, int64(parsedId))
 	}
 	return ids
 }

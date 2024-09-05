@@ -55,7 +55,7 @@ func (s *LLMService) Chat(chats []LLMChat, onGenerate func(string) error) (strin
 		prompt += ">>> " + chat.Content + "\n\n"
 	}
 	prompt += "<<<Asisten>>>"
-	return s.llm.CompletionStream(llm.IndoprogC, llm.CompletionOptions{
+	return s.llm.CompletionStream(llm.Indoprog, llm.CompletionOptions{
 		Prompt: prompt,
 		Stop:   []string{"<<<User>>>", "<<<Asisten>>>"},
 	}, onGenerate)
@@ -76,7 +76,7 @@ func (s *LLMService) GetChatTitle(chats []LLMChat) (string, error) {
 
 	prompt += "<<<Ringkasan>>> Dari percakapan diatas, kami menyimpulkan judul dari percakapan dengan maksimal 15 kata yaitu: `"
 
-	result, err := s.llm.Completion(llm.IndoprogC, llm.CompletionOptions{
+	result, err := s.llm.Completion(llm.Indoprog, llm.CompletionOptions{
 		Prompt:   prompt,
 		NPredict: 48,
 		Stop:     []string{"<<<Ringkasan>>>", "<<<Asisten>>>", "<<<User>>>"},
@@ -115,7 +115,7 @@ func (s *LLMService) GenerateSkillTree(topics []string) ([]evaluation.SkillTree,
 	return skillTrees, nil
 }
 
-func (s *LLMService) GenerateSkillTreeEntryContent(skillTreeEntry model.SkillTreeEntry) (string, error) {
+func (s *LLMService) GenerateSkillTreeEntryContent(skillTree model.SkillTree, skillTreeEntry model.SkillTreeEntry) (string, error) {
 	evaluator := evaluation.NewSkillTreeEvaluation(s.log, s.llm)
-	return evaluator.CreateSkillTreeEntryContent(skillTreeEntry.Title, skillTreeEntry.Description)
+	return evaluator.CreateSkillTreeEntryContent(skillTree.Title, skillTreeEntry.Title, skillTreeEntry.Description)
 }

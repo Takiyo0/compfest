@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/module/random"
 	"github.com/takiyo0/compfest/backend/repository"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -33,16 +35,52 @@ func (s *SkillTreeService) SetUserService(userService *UserService) {
 	s.userService = userService
 }
 
+func (s *SkillTreeService) calculateTopics(user model.User) ([]string, error) {
+	interviewQuestions, err := s.userService.GetInterviewQuestions(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	type topicScore struct {
+		Topic string
+		Score int
+	}
+
+	topicScores := make(map[string]int)
+	for _, question := range interviewQuestions {
+		if _, ok := topicScores[question.Topic]; !ok {
+			topicScores[question.Topic] = 0
+		}
+		topicScores[question.Topic] += 1
+	}
+
+	topicScoresSlice := make([]topicScore, 0, len(topicScores))
+	for topic, score := range topicScores {
+		topicScoresSlice = append(topicScoresSlice, topicScore{Topic: topic, Score: score})
+	}
+
+	sort.Slice(topicScoresSlice, func(i, j int) bool {
+		return topicScoresSlice[i].Score < topicScoresSlice[j].Score
+	})
+
+	topics := make([]string, 0, len(topicScoresSlice))
+	for _, ts := range topicScoresSlice {
+		topics = append(topics, ts.Topic)
+	}
+
+	return topics, nil
+}
+
 func (s *SkillTreeService) GetSkillTree(user model.User) ([]model.SkillTree, error) {
 	if user.InterviewQuestionStatus != model.InterviewQuestionStatusQuestionsFinished {
-		return nil, errors.New("user interview question status is not finished")
+		return nil, &echo.HTTPError{Code: 400, Message: "interview questions not finished"}
 	}
 
 	if user.SkillTreeStatus == model.SkillTreeContentStatusGenerating {
 		return nil, errors.New("generating")
 	}
 
-	if user.SkillTreeStatus == model.SkillTreeContentStatusGenerated {
+	if user.SkillTreeStatus == model.SkillTreeStatusInProgress || user.SkillTreeStatus == model.SkillTreeStatusFinished {
 		skillTrees, err := s.skillTreeRepository.FindByUserId(user.ID)
 		if err != nil {
 			return nil, err
@@ -55,7 +93,14 @@ func (s *SkillTreeService) GetSkillTree(user model.User) ([]model.SkillTree, err
 	}
 
 	go func() {
-		skillTrees, err := s.llmService.GenerateSkillTree(user.Topics())
+		topics, err := s.calculateTopics(user)
+		if err != nil {
+			s.log.WithError(err).Error("failed to calculate topics")
+			_ = s.userService.SetSkillTreeStatus(user.ID, model.SkillTreeStatusNotStarted)
+			return
+		}
+
+		skillTrees, err := s.llmService.GenerateSkillTree(topics)
 		if err != nil {
 			s.log.WithError(err).Error("failed to generate skill tree")
 			_ = s.userService.SetSkillTreeStatus(user.ID, model.SkillTreeStatusNotStarted)
@@ -93,6 +138,14 @@ func (s *SkillTreeService) GetSkillTree(user model.User) ([]model.SkillTree, err
 			_ = s.userService.SetSkillTreeStatus(user.ID, model.SkillTreeStatusNotStarted)
 			return
 		}
+
+		if err := s.skillTreeRepository.BulkCreateEntries(mappedEntries); err != nil {
+			s.log.WithError(err).Error("failed to insert skill tree entries")
+			_ = s.userService.SetSkillTreeStatus(user.ID, model.SkillTreeStatusNotStarted)
+			return
+		}
+
+		_ = s.userService.SetSkillTreeStatus(user.ID, model.SkillTreeStatusInProgress)
 	}()
 
 	return nil, errors.New("generating")
@@ -231,7 +284,14 @@ func (s *SkillTreeService) GetSkillTreeEntryContent(skillTreeEntryId int64) (*st
 			return nil, err
 		}
 		go func() {
-			content, err := s.llmService.GenerateSkillTreeEntryContent(*skillTreeEntry)
+			skillTree, err := s.skillTreeRepository.FindById(skillTreeEntry.SkillTreeId)
+			if err != nil {
+				s.log.WithError(err).Error("failed to find skill tree")
+				_ = s.skillTreeRepository.SetSkillTreeEntryContentStatus(skillTreeEntryId, model.SkillTreeContentStatusNone)
+				return
+			}
+
+			content, err := s.llmService.GenerateSkillTreeEntryContent(*skillTree, *skillTreeEntry)
 			if err != nil {
 				s.log.WithError(err).Error("failed to generate skill tree entry content")
 				_ = s.skillTreeRepository.SetSkillTreeEntryContentStatus(skillTreeEntryId, model.SkillTreeContentStatusNone)
@@ -249,6 +309,15 @@ func (s *SkillTreeService) GetSkillTreeEntryContent(skillTreeEntryId int64) (*st
 	return nil, errors.New("invalid skill tree entry content status")
 }
 
-func (s *SkillTreeService) SetFinished(id int64) error {
-	return s.skillTreeRepository.SetFinished(id)
+func (s *SkillTreeService) SetFinished(userId int64, skillTreeId int64) error {
+	skillTree, err := s.skillTreeRepository.FindById(skillTreeId)
+	if err != nil {
+		return err
+	}
+
+	if skillTree.UserId != userId {
+		return errors.New("invalid user")
+	}
+
+	return s.skillTreeRepository.SetFinished(skillTreeId)
 }

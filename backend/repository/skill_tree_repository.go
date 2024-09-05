@@ -45,9 +45,21 @@ func (r *SkillTreeRepository) BulkCreate(skillTrees []model.SkillTree) error {
 		if skillTree.Id != 0 {
 			id = &skillTree.Id
 		}
-		values = append(values, []any{id, skillTree.UserId, skillTree.IsRoot, skillTree.ChildSkillTreeIds_, skillTree.CreatedAt})
+		values = append(values, []any{id, skillTree.Title, skillTree.UserId, skillTree.IsRoot, skillTree.ChildSkillTreeIds_, skillTree.CreatedAt})
 	}
-	return database.BulkInsert(r.db, "skillTrees", []string{"id", "userId", "isRoot", "childSkillTreeIds", "createdAt"}, values)
+	return database.BulkInsert(r.db, "skillTrees", []string{"id", "title", "userId", "isRoot", "childSkillTreeIds", "createdAt"}, values)
+}
+
+func (r *SkillTreeRepository) BulkCreateEntries(entries []model.SkillTreeEntry) error {
+	values := make([][]any, 0)
+	for _, entry := range entries {
+		var id *int64
+		if entry.Id != 0 {
+			id = &entry.Id
+		}
+		values = append(values, []any{id, entry.SkillTreeId, entry.Title, entry.Description, entry.CreatedAt})
+	}
+	return database.BulkInsert(r.db, "skillTreeEntries", []string{"id", "skillTreeId", "title", "description", "createdAt"}, values)
 }
 
 func (r *SkillTreeRepository) GetSkillTreeQuestions(skillTreeId int64) ([]model.SkillTreeQuestion, error) {
@@ -90,7 +102,7 @@ func (r *SkillTreeRepository) FindQuestionById(id int64) (*model.SkillTreeQuesti
 
 func (r *SkillTreeRepository) GetAllFinishedSkillTreeQuestions(userId int64) ([]model.SkillTreeQuestion, error) {
 	var questions []model.SkillTreeQuestion
-	if err := r.db.Select(&questions, "SELECT * FROM skillTreeQuestions WHERE skillTreeId IN (SELECT * FROM skillTrees WHERE userId = ? AND finished = 1)", userId); err != nil {
+	if err := r.db.Select(&questions, "SELECT * FROM skillTreeQuestions WHERE skillTreeId IN (SELECT id FROM skillTrees WHERE userId = ? AND finished = 1)", userId); err != nil {
 		return nil, err
 	}
 	return questions, nil
