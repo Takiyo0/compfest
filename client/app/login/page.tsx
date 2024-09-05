@@ -1,11 +1,19 @@
-﻿import {LogoComponent} from "@/app/assets/images/logo";
+﻿'use client'
+
+import {LogoComponent} from "@/app/assets/images/logo";
 import {Manrope} from "next/font/google";
 import {Button} from "@nextui-org/react";
 import {FaGithub} from "react-icons/fa";
+import {useEffect} from "react";
+import {setCookie} from "cookies-next";
+import {ApiManager} from "@/app/managers/api";
 
 const manrope = Manrope({subsets: ["latin"]});
 
 export default function Login() {
+    useEffect(() => {
+        setCookie('Authorization', ApiManager.Encrypt("MTo3QldETlhjaTRuTERNa1huQWoyWThPelR6Qk53UjRyVXF4a05mS2tKTWJ1RlJ1MnJpRWZXeUFhRjJaY0pEUHJx"));
+    }, [])
     return <main
         className={"w-screen h-screen " + manrope.className}>
         <div
