@@ -22,6 +22,7 @@ import {PiQuestionMarkFill} from "react-icons/pi";
 import {MdOutlineExtensionOff} from "react-icons/md";
 import useQuestionQueue from "@/app/hooks/QuestionQueue";
 import {useRouter} from "next/navigation";
+import {useWindowSize} from "@react-hook/window-size";
 
 const manrope = Manrope({subsets: ["latin"]});
 
@@ -72,13 +73,13 @@ export default function HomePage({data, userData}: {
     data: TreeResponse['data']['skillTree'],
     userData: UserInfoResponse['data']
 }) {
-    console.log(data);
     const router = useRouter();
     const d3TreeData = transformToD3Format(data, data.find(x => x.isRoot)?.id ?? 777622795);
     const [showTree, setShowTree] = useState(false);
     const [treeTranslate, setTreeTranslate] = useState({x: 0, y: 0});
     const [selectedNode, setSelectedNode] = useState<number | undefined>(undefined);
 
+    const [width] = useWindowSize();
     const [isOpen, toggleOpen] = useCycle(true, false);
     const [height, setHeight] = useState(1000);
     const containerRef = useCallback((node: HTMLDivElement) => {
@@ -86,6 +87,10 @@ export default function HomePage({data, userData}: {
             setHeight(node.offsetHeight);
         }
     }, [])
+
+    React.useEffect(() => {
+        if (width < 1024 && isOpen) toggleOpen();
+    }, [width])
 
     const treeContainer = useCallback((node: HTMLDivElement) => {
         if (node != null) {
@@ -103,42 +108,13 @@ export default function HomePage({data, userData}: {
 
     function openQuestion(id: number) {
         if (id == undefined) return;
-        setSelectedNode(id);
+        router.push(`/material/${id}`);
     }
 
     return <>
         <Header userInfo={userData} center={true}/>
-        <Modal isOpen={!!selectedNode} classNames={{
-            base: "bg-primary-900 w-full max-w-[900px]"
-        }}>
-            <ModalContent>
-                <>
-                    <ModalHeader
-                        className="flex flex-col gap-1">{data.find(x => x.id == selectedNode)?.name}</ModalHeader>
-                    <ModalBody className={"flex flex-row"}>
-                        <div className={"w-min flex flex-col"}>
-                            {data.find(x => x.id === selectedNode)?.entries.map((x, i) => <Button className={""}
-                                                                                                  style={{width: "initial"}}
-                                                                                                  key={i}>
-                                {x.title}
-                            </Button>)}
-                        </div>
-                        <div className={"w-96"}>
-                            Hallo world
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button color="danger" variant="light" onPress={() => setSelectedNode(undefined)}>
-                            Close
-                        </Button>
-                        <Button color="primary" onPress={() => setSelectedNode(undefined)}>
-                            Action
-                        </Button>
-                    </ModalFooter>
-                </>
-            </ModalContent>
-        </Modal>
-        <main className={"blue-palette home flex h-screen items-start justify-between p-24 " + manrope.className}>
+        <main
+            className={"blue-palette home flex h-screen items-start justify-between p-24 " + manrope.className + (width < 1024 ? " !p-3 !pt-24" : "")}>
             <motion.nav
                 initial={false}
                 animate={isOpen ? "open" : "closed"}
@@ -166,12 +142,12 @@ export default function HomePage({data, userData}: {
                     duration: 0.8,
                     ease: [0, 0.71, 0.2, 1.01]
                 }}
-                className={"bg-[#c5cdcd1c] mt-4 p-2 box-border home-nav"}
+                className={"bg-[#c5cdcd1c] mt-4 p-2 box-border " + (width < 1024 ? "absolute left-3 backdrop-blur-3xl z-10" : "")}
             >
                 <Button isIconOnly className={"p-1 bg-transparent"} onPress={() => toggleOpen()}>
                     <IoMenu size={40}/>
                 </Button>
-                <motion.div className={"w-full p-4 box-border"} variants={{
+                <motion.div className={"w-full p-4 pt-0 box-border"} variants={{
                     open: {
                         display: "block",
                         opacity: 1
@@ -191,20 +167,6 @@ export default function HomePage({data, userData}: {
                     <Button startContent={<IoChatbubbleEllipses size={20}/>} className={"w-full text-left mt-3"}
                             color={"default"} onClick={() => router.push("/chat")}
                             variant={"solid"}>Chat</Button>
-
-                    {/*<div className={"mt-12 flex flex-col items-center"}>*/}
-                    {/*    <p className={"self-start mb-2"}>Proses Latar Belakang</p>*/}
-                    {/*    {queue.length > 0 ? queue.map((x, i) => <div key={i}*/}
-                    {/*                                                 className={"flex items-center mb-2 self-start"}>*/}
-
-                    {/*        <Spinner size={"md"} color="warning"/> <p className={"ml-2"}>{x.treeName}</p>*/}
-                    {/*    </div>) : <div*/}
-                    {/*        className={"flex flex-col items-center w-36 border-1 border-primary rounded-2xl p-3 mt-7 select-none"}>*/}
-                    {/*        <MdOutlineExtensionOff size={60}/>*/}
-                    {/*        <p className={"text-[.9rem] text-center mt-3"}>Tidak ada antrian proses latar belakang yang*/}
-                    {/*            berjalan. </p>*/}
-                    {/*    </div>}*/}
-                    {/*</div>*/}
                 </motion.div>
             </motion.nav>
             <div ref={treeContainer} id="treeWrapper"
