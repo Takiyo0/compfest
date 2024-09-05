@@ -7,11 +7,11 @@ const manrope = Manrope({subsets: ["latin"]});
 
 export default function Login() {
     return <main
-        className={"w-screen h-screen " + manrope.style}>
+        className={"w-screen h-screen " + manrope.className}>
         <div
             className={"bg-[#00000052] w-[90vw] max-w-xl relative left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 p-8 rounded-3xl shadow-2xl drop-shadow-2xl"}>
             <LogoComponent viewBox={"0 0 35 28"} className={"w-28 h-28 mx-auto"}/>
-            <h1 className={"text-3xl font-semibold text-center mt-2"}>Konfig AI</h1>
+            <h1 className={"text-3xl font-semibold text-center mt-2"}>Kuduga AI</h1>
             <h3 className={"text-center mt-2 text-xl"}>Identify your core skills and interests</h3>
             <div className={"min-h-32 w-full max-w-96 ml-auto mr-auto flex items-center"}>
                 <Button color="primary" className={"w-full text-[1.1rem] h-12"} startContent={<FaGithub size={30}/>}>
