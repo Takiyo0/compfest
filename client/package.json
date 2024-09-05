@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@nextui-org/react": "^2.4.6",
+    "@react-hook/window-size": "^3.1.1",
     "@uiw/react-markdown-preview": "^5.1.2",
     "@xyflow/react": "^12.2.0",
     "axios": "^1.7.5",
+    "client": "file:",
     "cookies-next": "^4.2.1",
     "crypto-js": "^4.2.0",
     "framer-motion": "^11.3.21",
