@@ -59,6 +59,10 @@ export class ApiManager {
         return this.Get<TreeEntryResponse>(`tree/${treeId}/content?entryId=${entryId}`, signal, token);
     }
 
+    public static async GetAnsweredQuestions(signal: AbortSignal, token: string) {
+        return this.Get<AnsweredQuestionsResponse>('tree/archive', signal, token);
+    }
+
     private static async Post<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
         try {
             let selfOptions: AxiosRequestConfig = {
@@ -152,6 +156,14 @@ export interface BaseApiResponse {
     statusCode: number;
     statusText: string;
     data: any;
+}
+
+export interface AnsweredQuestionsResponse extends BaseApiResponse {
+    data: {
+        treeId: number;
+        treeTitle: string;
+        totalQuestions: number;
+    }[]
 }
 
 export interface InterviewAnswerResponse extends BaseApiResponse {
