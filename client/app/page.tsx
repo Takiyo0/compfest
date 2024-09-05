@@ -114,5 +114,5 @@ export default async function Home() {
 
     const {data} = await ApiManager.GetTree(abort.signal, authorization ?? "");
 
-    return <HomePage data={data.skillTree} userData={user}/>;
+    return data.ready ? <HomePage data={data.skillTree} userData={user}/> : <AIProcessing userData={user}/>;
 }
