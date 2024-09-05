@@ -9,8 +9,10 @@ export default async function Page() {
     const abort = new AbortController();
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
+    if (statusCode != 200 || !user.userId) return redirect("/login");
+    if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
 
-    if (!user.userId) return redirect("/login");
+    const {data} = await ApiManager.GetAnsweredQuestions(abort.signal, authorization ?? "");
 
-    return <Archive userData={user}/>;
+    return <Archive userData={user} data={data}/>;
 }
