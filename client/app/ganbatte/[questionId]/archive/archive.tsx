@@ -29,7 +29,7 @@ export default function Archive({userData, questions}: {
     return <>
         <Header userInfo={userData} center={true}/>
         <main
-            className={"blue-palette w-screen min-h-screen pb-32 pt-32 flex justify-center " + manrope.className + (width < 1024 ? " !p-3 !pt-28" : "")}>
+            className={"blue-palette min-h-screen pb-32 pt-32 flex justify-center " + manrope.className + (width < 1024 ? " !p-3 !pt-28" : "")}>
             <motion.div
                 className={"w-52 h-min mr-5 rounded-xl bg-[#5353534d] p-5 pt-1 pl-4 pr-4 sticky backdrop-blur-3xl top-32 " + (width < 1024 ? ` z-10 !fixed top-28 rounded-bl-none rounded-tl-none` : "")}
                 initial={width < 1024 ? {left: isOpen} : {}}
@@ -62,7 +62,7 @@ export default function Archive({userData, questions}: {
                     })}
                 </div>
             </motion.div>
-            <div className={"flex flex-col items-center w-full"}>
+            <div className={"flex flex-col items-center"}>
                 {questions?.map((question, i) => {
                     const userWrongAnswered = question.userAnswer !== question.correctAnswer;
                     return <div id={`pertanyaan-${i}`}

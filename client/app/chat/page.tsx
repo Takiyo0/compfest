@@ -15,7 +15,7 @@ export default async function Page() {
     const authorization = getCookie("Authorization", {cookies});
     const {data: user, statusCode} = await ApiManager.getUser(controller.signal, authorization ?? "");
 
-    // if (statusCode != 200 || !user.userId) return redirect("/login");
+    if (statusCode != 200 || !user.userId) return redirect("/login");
     // if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     let {data, statusCode: code} = await ApiManager.GetChatTopics(controller.signal, authorization ?? "");
