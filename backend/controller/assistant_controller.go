@@ -7,6 +7,8 @@ import (
 	"github.com/takiyo0/compfest/backend/controller/gate"
 	"github.com/takiyo0/compfest/backend/service"
 	"net/http"
+	"sync"
+	"time"
 )
 
 type AssistantController struct {
@@ -62,6 +64,23 @@ func (c *AssistantController) handlePrompt(ctx echo.Context) error {
 	ctx.Response().Header().Set("Content-Type", "text/event-stream")
 	ctx.Response().Header().Set("X-Accel-Buffering", "no")
 
+	var mu sync.Mutex
+	ticker := time.NewTicker(300 * time.Millisecond)
+	defer ticker.Stop()
+	go func() {
+		for {
+			select {
+			case <-ctx.Request().Context().Done():
+				return
+			case <-ticker.C:
+				mu.Lock()
+				_, _ = ctx.Response().Write([]byte("data: {\"content\": \"\", \"stop\": false}\n\n"))
+				ctx.Response().Flush()
+				mu.Unlock()
+			}
+		}
+	}()
+
 	if _, err := c.assistantService.Chat(Sess(ctx).UserId, req.ChatId, req.Prompt, func(content string) error {
 		fmt.Print(content)
 		if content == "" {
@@ -71,6 +90,8 @@ func (c *AssistantController) handlePrompt(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
+		mu.Lock()
+		defer mu.Unlock()
 		if _, err := ctx.Response().Write([]byte("data: " + string(contentEncoded) + "\n\n")); err != nil {
 			return err
 		}
