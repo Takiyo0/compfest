@@ -11,6 +11,7 @@ import (
 	"github.com/takiyo0/compfest/backend/repository"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,8 @@ type SkillTreeService struct {
 	userService *UserService
 
 	skillTreeRepository *repository.SkillTreeRepository
+
+	skillTreeGenMu sync.Mutex
 }
 
 func NewSkillTreeService(log logrus.FieldLogger, skillTreeRepository *repository.SkillTreeRepository) *SkillTreeService {
@@ -71,7 +74,10 @@ func (s *SkillTreeService) calculateTopics(user model.User) ([]string, error) {
 	return topics, nil
 }
 
-func (s *SkillTreeService) GetSkillTree(user model.User) ([]model.SkillTree, error) {
+func (s *SkillTreeService) GetSkillTreeByUser(user model.User) ([]model.SkillTree, error) {
+	s.skillTreeGenMu.Lock()
+	defer s.skillTreeGenMu.Unlock()
+
 	if user.InterviewQuestionStatus != model.InterviewQuestionStatusQuestionsFinished {
 		return nil, &echo.HTTPError{Code: 400, Message: "interview questions not finished"}
 	}
@@ -151,6 +157,30 @@ func (s *SkillTreeService) GetSkillTree(user model.User) ([]model.SkillTree, err
 	return nil, errors.New("generating")
 }
 
+func (s *SkillTreeService) GetSkillTreeById(skillTreeId int64) (*model.SkillTree, error) {
+	skillTree, err := s.skillTreeRepository.FindById(skillTreeId)
+	if err != nil {
+		return nil, err
+	}
+	return skillTree, nil
+}
+
+func (s *SkillTreeService) GetFinishedSkillTrees(userId int64) ([]model.SkillTree, error) {
+	skillTrees, err := s.skillTreeRepository.FindByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	finishedSkillTrees := make([]model.SkillTree, 0, len(skillTrees))
+	for _, skillTree := range skillTrees {
+		if skillTree.Finished {
+			finishedSkillTrees = append(finishedSkillTrees, skillTree)
+		}
+	}
+
+	return finishedSkillTrees, nil
+}
+
 func (s *SkillTreeService) GetSkillTreeEntries(skillTreeId int64) ([]model.SkillTreeEntry, error) {
 	entries, err := s.skillTreeRepository.FindEntriesBySkillTreeId(skillTreeId)
 	if err != nil {
@@ -161,6 +191,9 @@ func (s *SkillTreeService) GetSkillTreeEntries(skillTreeId int64) ([]model.Skill
 }
 
 func (s *SkillTreeService) GetSkillTreeQuestions(skillTreeId int64) ([]model.SkillTreeQuestion, error) {
+	s.skillTreeGenMu.Lock()
+	defer s.skillTreeGenMu.Unlock()
+
 	skillTree, err := s.skillTreeRepository.FindById(skillTreeId)
 	if err != nil {
 		return nil, err
@@ -170,7 +203,7 @@ func (s *SkillTreeService) GetSkillTreeQuestions(skillTreeId int64) ([]model.Ski
 		return nil, errors.New("generating")
 	}
 
-	if skillTree.QuestionStatus == model.SkillTreeQuestionStatusInProgress || skillTree.QuestionStatus == model.SkillTreeQuestionStatusFinished {
+	if skillTree.QuestionStatus == model.SkillTreeQuestionStatusInProgress || skillTree.QuestionStatus == model.SkillTreeQuestionStatusSuccess {
 		questions, err := s.skillTreeRepository.GetSkillTreeQuestions(skillTreeId)
 		if err != nil {
 			return nil, err
@@ -248,8 +281,13 @@ func (s *SkillTreeService) AnswerQuestion(userId, questionId int64, choice int) 
 		return errors.New("invalid user")
 	}
 
-	if question.UserAnswer != nil {
-		return errors.New("question already answered")
+	user, err := s.userService.FindUserById(userId)
+	if err != nil {
+		return err
+	}
+
+	if user.SkillTreeStatus != model.SkillTreeStatusInProgress {
+		return errors.New("invalid skill tree status")
 	}
 
 	choices, err := question.Choices()
@@ -273,6 +311,9 @@ func (s *SkillTreeService) GetAllFinishedQuestions(userId int64) ([]model.SkillT
 }
 
 func (s *SkillTreeService) GetSkillTreeEntryContent(skillTreeEntryId int64) (*string, error) {
+	s.skillTreeGenMu.Lock()
+	defer s.skillTreeGenMu.Unlock()
+
 	skillTreeEntry, err := s.skillTreeRepository.FindSkillTreeEntryById(skillTreeEntryId)
 	if err != nil {
 		return nil, err
@@ -319,5 +360,9 @@ func (s *SkillTreeService) SetFinished(userId int64, skillTreeId int64) error {
 		return errors.New("invalid user")
 	}
 
-	return s.skillTreeRepository.SetFinished(skillTreeId)
+	if err := s.skillTreeRepository.SetFinished(skillTreeId); err != nil {
+		return err
+	}
+
+	return s.skillTreeRepository.SetSkillTreeQuestionStatus(skillTreeId, model.SkillTreeQuestionStatusSuccess)
 }

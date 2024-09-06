@@ -1,2 +1,2 @@
-Berikut adalah alur pembelajaran tentang `{topic}` yang berisi judul dan deskripsi secara berurutan menggunakan JSON schema: `{title: string, description: string}[]` (maksimal 15):
+Berikut adalah alur pembelajaran singkat tentang `{topic}` yang berisi judul dan deskripsi secara berurutan menggunakan JSON schema: `{title: string, description: string}[]` (maksimal 15):
 

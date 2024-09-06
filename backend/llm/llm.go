@@ -29,7 +29,7 @@ func New(endpoints map[string]string) *LLM {
 		if endpoint == "" {
 			panic(fmt.Sprintf("endpoint for model %s is empty", model))
 		}
-		llm.endpoints[model] = resty.New().SetBaseURL(endpoint).SetTimeout(30 * time.Minute)
+		llm.endpoints[model] = resty.New().SetBaseURL(endpoint).SetTimeout(90 * time.Minute)
 	}
 
 	return llm

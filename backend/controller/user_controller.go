@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"github.com/google/go-github/v50/github"
 	"github.com/labstack/echo/v4"
 	"github.com/takiyo0/compfest/backend/controller/gate"
@@ -75,7 +76,7 @@ func (c *UserController) handleAuthCallback(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"token":    authToken,
+		"token":    base64.StdEncoding.EncodeToString([]byte(authToken)),
 		"username": githubUser.GetName(),
 		"userId":   githubUser.GetID(),
 	})

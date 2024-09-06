@@ -1,7 +1,7 @@
 package model
 
 type LeveledSkillInfo struct {
-	Name  string `json:"language" validate:"required"`
+	Name  string `json:"name" validate:"required"`
 	Level int    `json:"level" validate:"min=1,max=3"`
 }
 

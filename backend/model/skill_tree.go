@@ -16,7 +16,7 @@ const (
 	SkillTreeQuestionStatusNotStarted = "NOT_STARTED"
 	SkillTreeQuestionStatusGenerating = "GENERATING"
 	SkillTreeQuestionStatusInProgress = "IN_PROGRESS"
-	SkillTreeQuestionStatusFinished   = "FINISHED"
+	SkillTreeQuestionStatusSuccess    = "SUCCESS"
 )
 
 type SkillTree struct {

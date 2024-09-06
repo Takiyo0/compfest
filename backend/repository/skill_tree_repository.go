@@ -130,3 +130,11 @@ func (r *SkillTreeRepository) SetFinished(skillTreeId int64) error {
 	_, err := r.db.Exec("UPDATE skillTrees SET finished = 1 WHERE id = ?", skillTreeId)
 	return err
 }
+
+func (r *SkillTreeRepository) GetFinishedSkillTrees(userId int64) ([]model.SkillTree, error) {
+	var skillTrees []model.SkillTree
+	if err := r.db.Select(&skillTrees, "SELECT * FROM skillTrees WHERE userId = ? AND finished = 1", userId); err != nil {
+		return nil, err
+	}
+	return skillTrees, nil
+}

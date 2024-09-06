@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,8 @@ type UserService struct {
 	userRepository              *repository.UserRepository
 	sessionRepository           *repository.SessionRepository
 	interviewQuestionRepository *repository.InterviewQuestionRepository
+
+	interviewQuestionMu sync.Mutex
 
 	llmService *LLMService
 }
@@ -108,6 +111,9 @@ func (s *UserService) DeleteSession(sessionId int64) error {
 }
 
 func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQuestion, error) {
+	s.interviewQuestionMu.Lock()
+	defer s.interviewQuestionMu.Unlock()
+
 	user, err := s.FindUserById(userId)
 	if err != nil {
 		return nil, err
