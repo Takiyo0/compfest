@@ -4,7 +4,12 @@ import {ApiManager, ChatMessagesResponse} from "@/app/managers/api"
 import Chat from "@/app/chat/chat";
 import {redirect} from "next/navigation";
 import ErrorPage from "@/app/components/pages/ErrorPage";
+import {Metadata} from "next";
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function Page() {
     const controller = new AbortController();
     const authorization = getCookie("Authorization", {cookies});

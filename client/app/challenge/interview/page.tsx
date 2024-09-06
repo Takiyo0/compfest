@@ -3,7 +3,12 @@ import {cookies} from "next/headers";
 import {ApiManager} from "@/app/managers/api";
 import ChallengeInterview from "@/app/challenge/interview/Interview";
 import {redirect} from "next/navigation";
+import {Metadata} from "next";
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function ChallengeInterviewPage() {
     const authorization = getCookie("Authorization", {cookies});
 

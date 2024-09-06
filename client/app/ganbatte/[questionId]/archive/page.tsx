@@ -5,7 +5,12 @@ import {redirect} from "next/navigation";
 import Archive from "@/app/ganbatte/[questionId]/archive/archive";
 import Error from "next/error";
 import ErrorPage from "@/app/components/pages/ErrorPage";
+import {Metadata} from "next";
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function Page({params}: { params: { [key: string]: string | string[] | undefined } }) {
     const questionId = params?.questionId;
 

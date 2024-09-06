@@ -3,7 +3,12 @@ import {cookies} from "next/headers";
 import ErrorPage from "@/app/components/pages/ErrorPage";
 import {ApiManager} from "@/app/managers/api";
 import Callback from "@/app/user/auth-callback/callback";
+import {Metadata} from "next";
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function Page({
                                        searchParams,
                                    }: {

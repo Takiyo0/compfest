@@ -5,7 +5,12 @@ import {ApiManager} from "@/app/managers/api";
 import ChallengeDescription from "@/app/challenge/description/description";
 import ErrorPage from "@/app/components/pages/ErrorPage";
 import {redirect} from 'next/navigation'
+import {Metadata} from "next";
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function ChallengeDescriptionPage() {
     const authorization = getCookie("Authorization", {cookies});
 

@@ -6,9 +6,14 @@ import {setCookie} from "cookies-next";
 import {ApiManager} from "@/app/managers/api";
 import CookieManager from "@/app/components/cookie";
 import {MdError} from "react-icons/md";
+import {Metadata} from "next";
 
 const manrope = Manrope({subsets: ["latin"]});
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function Login() {
     const {data, statusCode} = await ApiManager.GetOauthCode();
 

@@ -3,7 +3,12 @@ import {cookies} from "next/headers";
 import {ApiManager} from "@/app/managers/api";
 import {redirect} from "next/navigation";
 import Archive from "@/app/archive/Archive";
+import {Metadata} from "next";
 
+export const metadata: Metadata = {
+    title: 'Kuduga AI',
+    description: 'platform untuk belajar pemrograman',
+};
 export default async function Page() {
     const authorization = getCookie("Authorization", {cookies});
     const abort = new AbortController();
