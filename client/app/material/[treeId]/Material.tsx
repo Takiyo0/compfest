@@ -85,7 +85,6 @@ export default function Material({userData, skillTree}: {
             statusCode
         } = await ApiManager.GetTreeEntryContent(controller.current.signal, authorization ?? "", skillTree.id, id);
         if (statusCode != 200) return toast.error("Received code other than 200. Please try again later");
-        console.log(`Data is ${data.ready ? "ready" : "not ready"}`);
         if (data.ready) {
             setContents(x => {
                 const temp = [...x];
@@ -94,8 +93,6 @@ export default function Material({userData, skillTree}: {
             });
         } else addQueue({entryId: id, status: "PROCESSING"});
     }
-
-    React.useEffect(() => console.log([contents, selectedEntry]), [contents]);
 
     return <>
         <Header userInfo={userData} center={true}/>

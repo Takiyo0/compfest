@@ -302,7 +302,6 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                                 setAnswers(d => {
                                     const newAnswers = [...d]; // Create a copy of the array
                                     newAnswers[index].value = v; // Update the specific value
-                                    console.log(newAnswers);
                                     return newAnswers; // Return the updated array
                                 });
                             }}
@@ -318,7 +317,6 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                             className={"ml-5"}
                             onChange={(v) => setAnswers(d => {
                                 const newAnswers = d.map(x => x.id == data.id ? {...x, value: v.target.value} : x);
-                                console.log(newAnswers);
                                 return newAnswers;
                             })}
                         >
@@ -350,7 +348,6 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                                             }
                                             : x
                                         );
-                                        console.log(newAnswers);
                                         return newAnswers;
                                     })}
                                 >
@@ -387,7 +384,6 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                                                             }) =>
                                                                 item.name === x.name ? {...item, level: v} : item
                                                         );
-                                                        console.log(newAnswers);
                                                         return newAnswers;
                                                     });
                                                 }}

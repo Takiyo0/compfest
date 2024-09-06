@@ -41,7 +41,6 @@ interface RawNodeDatum {
 
 function transformToD3Format(skillTree: TreeResponse['data']['skillTree'], rootId: number): RawNodeDatum {
     function findNodeById(id: number): TreeResponse['data']['skillTree'][0] | undefined {
-        console.log(skillTree)
         return skillTree.find(node => node.id === id);
     }
 
@@ -183,7 +182,6 @@ export default function HomePage({data, userData}: {
                       renderCustomNodeElement={n => {
                           const data = n.nodeDatum;
                           const isTopRoot = data.name == "Your Skill Tree";
-                          console.log(isTopRoot, data.name)
                           return <foreignObject x={isTopRoot ? -100 : -13} y={isTopRoot ? -60 : -35} width={230}
                                                 height={80}>
                               <div

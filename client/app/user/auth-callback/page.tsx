@@ -22,7 +22,6 @@ export default async function Page({
     if (state != stateCookie) return <ErrorPage message={"Mismatch. Please go back home"} errorCode={401} hideBack/>;
 
     const {data, statusCode} = await ApiManager.SendOauthCode(code, state);
-    console.log([data, code, state])
     if (statusCode != 200) return <ErrorPage message={"Unexpected response from server. Please try again later"}
                                              errorCode={500} hideBack/>;
 
