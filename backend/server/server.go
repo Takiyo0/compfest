@@ -33,7 +33,8 @@ func New(log logrus.FieldLogger, cfg config.Config) *Server {
 
 func (s *Server) Start() error {
 	s.ai = llm.New(map[string]string{
-		llm.Indoprog: s.cfg.IndoprogUrl,
+		llm.Indoprog:  s.cfg.IndoprogUrl,
+		llm.IndoprogC: s.cfg.IndoprogCUrl,
 	})
 
 	s.e = echo.New()
