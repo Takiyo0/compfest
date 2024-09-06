@@ -18,7 +18,8 @@ export default async function Page({
     if (Number.isNaN(questionId)) return;
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
-    if (!user.userId) return redirect("/login");
+    if (statusCode != 200 || !user.userId) return redirect("/login");
+    if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     const {data, statusCode: code} = await ApiManager.GetTree(abort.signal, authorization ?? "");
     if (code !== 200) return <ErrorPage message={"Terjadi kesalahan pada server. Silahkan coba lagi nanti"}
@@ -26,7 +27,7 @@ export default async function Page({
     if (!data.ready) return <ErrorPage message={"Skill tree belum di buat. Harap menunggu"}
                                        errorCode={400}/>
     const target = data.skillTree.find(x => x.id === Number(questionId));
-    console.log([Number(questionId), target, data.skillTree])
+
     if (!target) return <ErrorPage message={"Skill tree tidak ditemukan"} errorCode={404}/>
 
     return <Material userData={user} skillTree={target}/>

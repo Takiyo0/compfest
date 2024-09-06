@@ -15,7 +15,8 @@ export default async function Page({params}: { params: { [key: string]: string |
     if (Number.isNaN(questionId) && questionId !== "interview") return;
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
-    if (!user.userId) return redirect("/login");
+    if (statusCode != 200 || !user.userId) return redirect("/login");
+    if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     let d, s;
 

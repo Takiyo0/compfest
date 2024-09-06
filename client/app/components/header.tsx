@@ -5,9 +5,12 @@ import {Dropdown, DropdownItem, DropdownMenu, DropdownTrigger} from "@nextui-org
 import {User} from "@nextui-org/user";
 import {useWindowSize} from "@react-hook/window-size";
 import {deleteCookie} from "cookies-next";
+import {router} from "next/client";
+import {useRouter} from "next/navigation";
 
 export default function Header({userInfo, center = false}: { userInfo: any, center?: boolean }) {
     const [width] = useWindowSize();
+    const router = useRouter();
 
     function logout() {
         deleteCookie('Authorization');
@@ -54,11 +57,13 @@ export default function Header({userInfo, center = false}: { userInfo: any, cent
                         <p className="font-bold">Currently not</p>
                         <p className="font-bold">Signed in</p>
                     </DropdownItem>}
-                    <DropdownItem key="home">
-                        Home
+                    <DropdownItem key="home" onClick={() => router.push("/")}>
+                        Beranda
                     </DropdownItem>
-                    <DropdownItem key="archive">Arsip Pertanyaan</DropdownItem>
-                    <DropdownItem key="chat">
+                    <DropdownItem key="archive" onClick={() => router.push("/archive")}>
+                        Arsip Pertanyaan
+                    </DropdownItem>
+                    <DropdownItem key="chat" onClick={() => router.push("/chat")}>
                         Chat
                     </DropdownItem>
                     <DropdownItem key="logout" color="danger" onClick={logout}>

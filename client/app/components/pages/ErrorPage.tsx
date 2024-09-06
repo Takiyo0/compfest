@@ -10,7 +10,7 @@ const manrope = Manrope({subsets: ["latin"]});
 export default function ErrorPage({message, errorCode, hideBack = false}: {
     message: string,
     errorCode: number,
-    hideBack: boolean
+    hideBack?: boolean
 }) {
     const router = useRouter();
     return <main

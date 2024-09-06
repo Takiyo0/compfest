@@ -3,7 +3,7 @@ import CryptoJS from "crypto-js";
 import {opt} from "ts-interface-checker";
 
 export class ApiManager {
-    public static BaseUrl = "https://8fd5-180-244-134-175.ngrok-free.app";
+    public static BaseUrl = "https://api-aic.kuduga.com";
     public static encryptionKey = "bad7a50445665cb529f402ad7e78650cd9877725b8499e3597c6125e89f32766";
 
     public static async GetOauthCode() {
@@ -11,7 +11,7 @@ export class ApiManager {
     }
 
     public static async SendOauthCode(code: string, state: string) {
-        return this.Post<OauthCallbackResponse>(`user/auth-callback?code=${code}&state=${state}`);
+        return this.Get<OauthCallbackResponse>(`user/auth-callback?code=${code}&state=${state}`);
     }
 
     public static async getUser(signal: AbortSignal, token: string): Promise<UserInfoResponse> {
@@ -90,6 +90,7 @@ export class ApiManager {
                 data: response.data
             } as T;
         } catch (e: any) {
+            console.error(e);
             if (e.name === 'AbortError') return {
                 statusCode: 69,
                 statusText: "Got Aborted RIP",

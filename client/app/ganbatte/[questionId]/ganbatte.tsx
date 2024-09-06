@@ -131,6 +131,50 @@ export default function GanbattePage({userData, questions, questionId}: {
                         color="#84A1F5"/>
                     <p className={"mt-7 text-2xl"}>Sedang menyiapkan pertanyaan... Estimasi waktu 3-5 menit.
                         Harap menunggu</p>
+                    <Button color={"primary"} className={"mt-5"} startContent={<IoArrowBack size={20}/>}
+                            onPress={() => router.back()}>
+                        Kembali
+                    </Button>
+                    <Tetris
+                        keyboardControls={{
+                            down: 'MOVE_DOWN',
+                            left: 'MOVE_LEFT',
+                            right: 'MOVE_RIGHT',
+                            space: 'HARD_DROP',
+                            z: 'FLIP_COUNTERCLOCKWISE',
+                            x: 'FLIP_CLOCKWISE',
+                            up: 'FLIP_CLOCKWISE',
+                            p: 'TOGGLE_PAUSE',
+                            c: 'HOLD',
+                            shift: 'HOLD'
+                        }}
+                    >
+                        {({
+                              Gameboard,
+                              PieceQueue,
+                              points,
+                              linesCleared,
+                              state,
+                              controller
+                          }) => (
+                            <div className={"flex mt-6"}>
+                                <div>
+                                    <p>Points: {points}</p>
+                                    <p>Lines Cleared: {linesCleared}</p>
+                                </div>
+                                <div className={"w-10"}/>
+                                <Gameboard/>
+                                <div className={"w-10"}/>
+                                <PieceQueue/>
+                                {state === 'LOST' && (
+                                    <div>
+                                        <h2>Game Over</h2>
+                                        <button onClick={controller.restart}>New game</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </Tetris>
                 </div>
             </main> : <main
                 className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.className + (width < 1024 ? " !p-3 !pt-14" : "")}>

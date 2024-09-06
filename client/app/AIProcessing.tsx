@@ -28,12 +28,6 @@ export default function AIProcessing({userData}: {
 
         getLoader();
 
-        window.addEventListener("keydown", function (e) {
-            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
-                e.preventDefault();
-            }
-        }, false);
-
         interval.current = setInterval(async () => {
             if (controller.current.signal.aborted) {
                 clearInterval(interval.current);
@@ -55,7 +49,7 @@ export default function AIProcessing({userData}: {
     return <>
         <Header userInfo={userData} center/>
         <main
-            className={"blue-palette flex flex-col items-center justify-center p-24 " + manrope.className + (width < 1024 ? ' !pl-2 !pr-2' : ' ')}>
+            className={"blue-palette flex flex-col items-center justify-center p-24 h-screen " + manrope.className + (width < 1024 ? ' !pl-2 !pr-2' : ' ')}>
             <div className={"flex items-center flex-col"}>
                 <l-helix
                     size="200"

@@ -32,9 +32,9 @@ export default function Challenge({userData}: { userData: UserInfoResponse['data
                 className={"font-bold gradient-user-1"}> {userData.username}</a></p>
             <p className={"text-center mt-5"}>Silahkan pilih sumber info yang akan kami gunakan untuk membuat Skill Tree
                 Anda</p>
-            <Button startContent={<FaGithubAlt size={30}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"} onClick={() => router.push("/idk")}>
-                gunakan profil GitHub
-            </Button>
+            {/*<Button startContent={<FaGithubAlt size={30}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"} onClick={() => router.push("/idk")}>*/}
+            {/*    gunakan profil GitHub*/}
+            {/*</Button>*/}
             <Button startContent={<FaPencilAlt size={24}/>} color={"primary"} className={"w-full mt-5 text-[1.1rem]"} onClick={() => router.push("/challenge/description")}>
                 deskripsikan skill
             </Button>

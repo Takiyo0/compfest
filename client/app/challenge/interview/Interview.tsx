@@ -17,6 +17,7 @@ import {useRouter} from "next/navigation";
 import {useWindowSize} from "@react-hook/window-size";
 import {useCycle} from "framer-motion";
 import {cookies} from "next/headers";
+import TetrisGame from "@/app/components/Tetris";
 
 const manrope = Manrope({subsets: ["latin"]});
 export default function ChallengeInterview({userData, questions}: {
@@ -24,7 +25,7 @@ export default function ChallengeInterview({userData, questions}: {
     questions: InterviewQuestionsResponse['data']
 }) {
     const [questionReady, setQuestionReady] = useState(questions.ready);
-    const [width, height] = useWindowSize();
+    const [width] = useWindowSize();
     const router = useRouter();
     const [user, setUser] = React.useState<UserInfoResponse['data'] | undefined>(userData);
     const lastQuestion = localStorage.getItem("lastQuestion");
@@ -52,7 +53,7 @@ export default function ChallengeInterview({userData, questions}: {
                     data,
                     statusCode
                 } = await ApiManager.GetInterviewQuestions(controller.current.signal, Authorization ?? "");
-                if (statusCode == 200) setQuestionReady(data.ready);
+                if (statusCode == 200 && data.ready) window.location.reload();
             }, 3000);
         } else if (!isFirst) window.location.reload();
 
@@ -122,9 +123,10 @@ export default function ChallengeInterview({userData, questions}: {
                         size="200"
                         speed="2.5"
                         color="#84A1F5"/>
-                    <p className={"mt-7 text-2xl"}>Sedang membuat pertanyaan interview Anda. Estimasi waktu 1-2 menit.
+                    <p className={"mt-7 text-2xl"}>Sedang membuat pertanyaan interview Anda. Estimasi waktu 5-10 menit.
                         Harap menunggu</p>
                 </div>
+                <TetrisGame/>
             </main> : <main
                 className={"blue-palette min-w-screen min-h-screen flex flex-col items-center pb-32 pt-20 " + manrope.className + (width < 1024 ? " pt-10" : "")}>
                 <div className={"mt-16 flex w-[98vw] max-w-[1200px] " + (width < 1024 ? "flex-col p-2" : "flex-row")}>
@@ -133,26 +135,27 @@ export default function ChallengeInterview({userData, questions}: {
                         <h2 className={"text-xl ml-[8px] mt-[3px] mb-[5px]"}>Pertanyaan</h2>
                         <Divider/>
                         <div className={"bg-transparent w-full flex flex-wrap justify-normal gap-1 p-2"}>
-                            {questions.questions.map((x, i) => <div
+                            {(questions.questions ?? []).map((x, i) => <div
                                 className={"bg-[#0f1f2d] w-10 h-12 flex items-center justify-center mt-2 rounded select-none hover:scale-105 cursor-pointer transition-all duration-75"}
                                 style={{
                                     border: `2px solid ${currentQuestion == i ? "gray" : (answers[i].answer == undefined ? "red" : "green")}`
                                 }}
                                 onClick={() => OnNext(currentQuestion, i)}
                                 key={i}>{i + 1}</div>)}
-                            {questions.questions.length < 12 && questions.questions.length > 8 && new Array(12 - questions.questions.length).fill(null).map((x, i) =>
+                            {(questions.questions ?? []).length < 12 && (questions.questions ?? []).length > 8 && new Array(12 - questions.questions.length).fill(null).map((x, i) =>
                                 <div
                                     className={"w-10 h-12 invisible"} key={i}></div>)}
                         </div>
                     </div>
                     <div
-                        className={"w-full flex-1 min-h-32 bg-[#5353534d] ml-10 rounded-xl p-5 box-border " + (width < 1024 ? "mt-10 ml-0" : "mt-0")}>
+                        className={"w-full flex-1 min-h-32 bg-[#5353534d] ml-10 rounded-xl p-5 box-border " + (width < 1024 ? "!mt-10 !ml-0" : "mt-0")}>
                         <div>
                             <p className={"mb-3 text-xl"}>Pertanyaan {currentQuestion + 1}</p>
                             <hr/>
-                            <MarkdownPreview source={questions.questions[currentQuestion].content.trim()}
-                                             className={"mt-3"}
-                                             style={{backgroundColor: "transparent"}}/>
+                            <MarkdownPreview
+                                source={(questions.questions[currentQuestion] ?? "").content.trim().replace(/\\n/g, "\n")}
+                                className={"mt-3"}
+                                style={{backgroundColor: "transparent"}}/>
                             <RadioGroup
                                 value={answers[currentQuestion].answer?.toString() ?? ''}
                                 isDisabled={submitting}
@@ -164,8 +167,16 @@ export default function ChallengeInterview({userData, questions}: {
                                     } : x);
                                 })}
                             >
-                                {questions.questions[currentQuestion].choices.map((x, k) => <Radio key={k}
-                                                                                                   value={k.toString()}>{(k + 10).toString(36).toUpperCase()}. {x}</Radio>)}
+                                {/*{questions.questions[currentQuestion].choices.map((x, k) => <Radio key={k}*/}
+                                {/*                                                                   value={k.toString()}>{(k + 10).toString(36).toUpperCase()}. {x}</Radio>)}*/}
+                                {questions.questions![currentQuestion].choices.map((x, k) => <Radio key={k}
+                                                                                                    value={k.toString()}>
+                                    <div
+                                        className={"flex items-center"}>{(k + 10).toString(36).toUpperCase()}. <MarkdownPreview
+                                        className={"ml-2"}
+                                        style={{backgroundColor: "transparent", color: "white"}}
+                                        source={x.trim()}/></div>
+                                </Radio>)}
                             </RadioGroup>
                         </div>
                         <div className={"flex mt-7"}>

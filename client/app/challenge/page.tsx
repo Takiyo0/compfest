@@ -10,11 +10,10 @@ export default async function ChallengePage() {
 
     const abort = new AbortController();
 
-    console.log("parent challenge called")
-
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
     if (!user.userId) return redirect("/login");
     if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
+    if (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS') return redirect("/challenge/interview");
     if (user.filledSkillInfo) return <ErrorPage message={"Anda sudah tidak bisa memilih opsi lagi disini"}
                                                 errorCode={400}/>
     return <Challenge userData={user}/>;

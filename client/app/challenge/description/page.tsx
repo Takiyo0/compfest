@@ -13,7 +13,7 @@ export default async function ChallengeDescriptionPage() {
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
     if (!user.userId) return redirect("/login");
-    if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
+    if (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS') return redirect("/challenge/interview");
     if (user.filledSkillInfo) return <ErrorPage message={"Anda sudah mengisi form deskripsi kemampuan Anda"}
                                                 errorCode={400}/>
     return <ChallengeDescription userData={user}/>

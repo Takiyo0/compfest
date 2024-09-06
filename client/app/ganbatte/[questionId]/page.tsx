@@ -205,9 +205,8 @@ export default async function Page({
     if (Number.isNaN(questionId)) return;
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
-
-    if (!user.userId) return redirect("/login");
-    // if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
+    if (statusCode != 200 || !user.userId) return redirect("/login");
+    if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     const {data} = await ApiManager.GetTreeQuestions(abort.signal, authorization ?? "", Number(questionId));
     return <GanbattePage userData={user} questions={data} questionId={Number(questionId)}/>

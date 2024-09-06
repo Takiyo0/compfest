@@ -267,7 +267,6 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
             data
         } = await ApiManager.SubmitDescription(abort.current.signal, authorization ?? "", finalAnswer);
         setSubmitting(false);
-        console.log(data)
         if (statusCode !== 200) return toast.error("Something went wrong when processing the request. Please try again later!", {
             style: {
                 borderRadius: '20px',
@@ -275,7 +274,7 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                 color: '#fff',
             },
         })
-        router.push("/challenge/processing");
+        router.push("/challenge/interview");
     }
 
     return <>

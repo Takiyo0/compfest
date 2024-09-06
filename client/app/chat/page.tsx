@@ -11,7 +11,7 @@ export default async function Page() {
     const {data: user, statusCode} = await ApiManager.getUser(controller.signal, authorization ?? "");
 
     if (statusCode != 200 || !user.userId) return redirect("/login");
-    if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
+    if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     let {data, statusCode: code} = await ApiManager.GetChatTopics(controller.signal, authorization ?? "");
     if (!Array.isArray(data) && code != 200) return <ErrorPage

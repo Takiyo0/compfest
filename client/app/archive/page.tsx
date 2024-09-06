@@ -10,7 +10,7 @@ export default async function Page() {
 
     const {data: user, statusCode} = await ApiManager.getUser(abort.signal, authorization ?? "");
     if (statusCode != 200 || !user.userId) return redirect("/login");
-    if (user.interviewQuestionStatus == "IN_PROGRESS") return redirect("/challenge/interview");
+    if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     const {data} = await ApiManager.GetAnsweredQuestions(abort.signal, authorization ?? "");
 

@@ -8,6 +8,14 @@ import {useWindowSize} from "@react-hook/window-size";
 
 export default function TetrisGame({...props}) {
     const [width] = useWindowSize();
+
+    React.useEffect(() => {
+        window.addEventListener("keydown", function (e) {
+            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+        }, false);
+    }, [])
     return <Tetris
         keyboardControls={{
             down: 'MOVE_DOWN',
