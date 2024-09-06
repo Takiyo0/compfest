@@ -33,28 +33,19 @@ func New(log logrus.FieldLogger, cfg config.Config) *Server {
 
 func (s *Server) Start() error {
 	s.ai = llm.New(map[string]string{
-		llm.IndoprogQ: s.cfg.IndoprogqUrl,
-		llm.IndoprogC: s.cfg.IndoprogcUrl,
+		llm.Indoprog:  s.cfg.IndoprogUrl,
+		llm.IndoprogC: s.cfg.IndoprogCUrl,
 	})
 
 	s.e = echo.New()
+	s.e.Validator = controller.NewCustomValidator()
 	s.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     strings.Split(s.cfg.CorsOrigin, ","),
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 		AllowCredentials: true,
 		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization, echo.HeaderAccept},
 	}))
-	s.e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:    true,
-		LogStatus: true,
-		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-			s.log.WithFields(logrus.Fields{
-				"URI":    values.URI,
-				"status": values.Status,
-			}).Info("request")
-			return nil
-		},
-	}))
+	s.e.Use(middleware.Logger())
 	s.e.Use(middleware.Recover())
 
 	db, err := sqlx.Open("mysql", s.cfg.Database.DSN())
@@ -68,15 +59,26 @@ func (s *Server) Start() error {
 	userRepository := repository.NewUserRepository(db)
 	sessionRepository := repository.NewSessionRepository(db)
 	interviewQuestionRepository := repository.NewInterviewQuestionRepository(db)
+	assistantRepository := repository.NewAssistantRepository(db)
+	skillTreeRepository := repository.NewSkillTreeRepository(db)
 
-	llmService := service.NewLLMService(s.ai)
+	llmService := service.NewLLMService(s.log, s.ai)
 
 	userService := service.NewUserService(s.log, userRepository, sessionRepository, interviewQuestionRepository)
 	userService.SetLLMService(llmService)
 
-	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
+	assistantService := service.NewAssistantService(s.log, assistantRepository)
+	assistantService.SetLLMService(llmService)
 
-	return s.e.Start(":8085")
+	skillTreeService := service.NewSkillTreeService(s.log, skillTreeRepository)
+	skillTreeService.SetLLMService(llmService)
+	skillTreeService.SetUserService(userService)
+
+	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
+	s.addController(controller.NewAssistantController(assistantService, userService))
+	s.addController(controller.NewSkillTreeController(userService, skillTreeService))
+
+	return s.e.Start(fmt.Sprintf(":%d", s.cfg.AppPort))
 }
 
 func (s *Server) addController(c controller.Controller) {

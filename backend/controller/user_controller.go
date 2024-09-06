@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"database/sql"
+	"encoding/base64"
 	"github.com/google/go-github/v50/github"
 	"github.com/labstack/echo/v4"
 	"github.com/takiyo0/compfest/backend/controller/gate"
@@ -27,15 +29,17 @@ func (c *UserController) SetUp(e *echo.Echo) {
 
 	g := e.Group("/user")
 	g.GET("/auth-code", c.handleAuth)
-	g.POST("/auth-callback", c.handleAuthCallback)
+	g.GET("/auth-callback", c.handleAuthCallback)
 	g.POST("/logout", c.handleLogout, authGate)
 	g.GET("/info", c.handleInfo, authGate)
 
-	qg := e.Group("/questions", authGate)
+	qg := g.Group("/questions", authGate)
 	qg.GET("/", c.handleGetQuestions)
 	qg.POST("/:id/answer", c.handleAnswerQuestion)
 
-	e.POST("/skill-description", c.handleUpdateSkillDescription, authGate)
+	g.POST("/submit-interview", c.handleSubmitInterview, authGate)
+	g.POST("/skill-description", c.handleUpdateSkillDescription, authGate)
+	g.POST("/skill-info", c.handleUpdateSkillInfo, authGate)
 }
 
 func (c *UserController) handleAuth(ctx echo.Context) error {
@@ -48,8 +52,8 @@ func (c *UserController) handleAuth(ctx echo.Context) error {
 
 func (c *UserController) handleAuthCallback(ctx echo.Context) error {
 	type authCallbackRequest struct {
-		State string `json:"state" validate:"required"`
-		Code  string `json:"code" validate:"required"`
+		State string `query:"state" validate:"required"`
+		Code  string `query:"code" validate:"required"`
 	}
 	var req authCallbackRequest
 	if err := BindAndValidate(ctx, &req); err != nil {
@@ -72,7 +76,7 @@ func (c *UserController) handleAuthCallback(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"token":    authToken,
+		"token":    base64.StdEncoding.EncodeToString([]byte(authToken)),
 		"username": githubUser.GetName(),
 		"userId":   githubUser.GetID(),
 	})
@@ -92,20 +96,34 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	skillInfo, err := user.SkillInfo()
+	if err != nil {
+		return err
+	}
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"userId":           sess.UserId,
-		"username":         user.Name,
-		"createdAt":        user.CreatedAt,
-		"skillDescription": user.SkillDescription,
+		"userId":                  sess.UserId,
+		"username":                user.Name,
+		"createdAt":               user.CreatedAt,
+		"skillDescription":        user.SkillDescription,
+		"doneInterview":           user.InterviewQuestionStatus == model.InterviewQuestionStatusQuestionsFinished,
+		"interviewQuestionStatus": user.InterviewQuestionStatus,
+		"skillInfo":               skillInfo,
+		"filledSkillInfo":         user.FilledSkillInfo,
 	})
 }
 
 func (c *UserController) handleGetQuestions(ctx echo.Context) error {
+	user, err := c.userService.FindUserById(Sess(ctx).UserId)
+	if err != nil {
+		return err
+	}
 	type questionType struct {
-		Id         int64    `json:"id"`
-		Content    string   `json:"content"`
-		Choices    []string `json:"choices"`
-		UserAnswer *int     `json:"userAnswer"`
+		Id                int64    `json:"id"`
+		Content           string   `json:"content"`
+		Choices           []string `json:"choices"`
+		UserAnswer        *int     `json:"userAnswer"`
+		CorrectAnswer     *int     `json:"correctAnswer,omitempty"`
+		AnswerExplanation *string  `json:"answerExplanation,omitempty"`
 	}
 	type respType struct {
 		Ready     bool           `json:"ready"`
@@ -124,14 +142,19 @@ func (c *UserController) handleGetQuestions(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
-		questionList = append(questionList, questionType{
+		qAppend := questionType{
 			Id:         q.Id,
 			Content:    q.Content,
 			Choices:    choices,
 			UserAnswer: q.UserAnswer,
-		})
+		}
+		if user.InterviewQuestionStatus == model.InterviewQuestionStatusQuestionsFinished {
+			qAppend.CorrectAnswer = &q.CorrectChoice
+			qAppend.AnswerExplanation = &q.Explanation
+		}
+		questionList = append(questionList, qAppend)
 	}
-	return ctx.JSON(http.StatusOK, questions)
+	return ctx.JSON(http.StatusOK, &respType{Ready: true, Questions: questionList})
 }
 
 func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
@@ -154,6 +177,16 @@ func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, M("Answered"))
 }
 
+func (c *UserController) handleSubmitInterview(ctx echo.Context) error {
+	if err := c.userService.SubmitInterview(Sess(ctx).UserId); err != nil {
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "An error occurred. The interview might not be ready yet or has been submitted.")
+		}
+		return err
+	}
+	return ctx.JSON(http.StatusOK, M("Submitted"))
+}
+
 func (c *UserController) handleUpdateSkillDescription(ctx echo.Context) error {
 	type updateSkillDescriptionRequest struct {
 		Description string `json:"description" validate:"max=5000"`
@@ -165,5 +198,18 @@ func (c *UserController) handleUpdateSkillDescription(ctx echo.Context) error {
 	if err := c.userService.UpdateSkillDescription(Sess(ctx).UserId, req.Description); err != nil {
 		return err
 	}
+	return ctx.JSON(http.StatusOK, M("Updated"))
+}
+
+func (c *UserController) handleUpdateSkillInfo(ctx echo.Context) error {
+	var req model.SkillInfo
+	if err := BindAndValidate(ctx, &req); err != nil {
+		return err
+	}
+
+	if err := c.userService.UpdateSkillInfo(Sess(ctx).UserId, req, true); err != nil {
+		return err
+	}
+
 	return ctx.JSON(http.StatusOK, M("Updated"))
 }

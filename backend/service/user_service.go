@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,8 @@ type UserService struct {
 	userRepository              *repository.UserRepository
 	sessionRepository           *repository.SessionRepository
 	interviewQuestionRepository *repository.InterviewQuestionRepository
+
+	interviewQuestionMu sync.Mutex
 
 	llmService *LLMService
 }
@@ -108,46 +111,21 @@ func (s *UserService) DeleteSession(sessionId int64) error {
 }
 
 func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQuestion, error) {
+	s.interviewQuestionMu.Lock()
+	defer s.interviewQuestionMu.Unlock()
+
 	user, err := s.FindUserById(userId)
 	if err != nil {
 		return nil, err
 	}
 	switch user.InterviewQuestionStatus {
 	case model.InterviewQuestionStatusNotStarted:
+		_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsNotReady)
 		go func() {
-			// TODO: sql transaction to keep data consistent
-			if err := s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsNotReady); err != nil {
-				s.log.Errorf("failed to set interview question status: %v", err)
-				return
-			}
-			questions, err := s.llmService.CreateQuestions("Interview Programmer senior C++", 5)
-			if err != nil {
+			if err := s.generateInterviewQuestions(*user); err != nil {
 				_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
-				s.log.Errorf("failed to create questions: %v", err)
-				return
+				s.log.WithError(err).Error("failed to generate interview questions")
 			}
-			mappedQuestions := make([]model.InterviewQuestion, 0)
-			for _, question := range questions {
-				serializedChoices, err := json.Marshal(question.Choices)
-				if err != nil {
-					_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
-					s.log.Errorf("failed to serialize choices: %v", err)
-					return
-				}
-				mappedQuestions = append(mappedQuestions, model.InterviewQuestion{
-					UserId:        userId,
-					Content:       question.Content,
-					Choices_:      string(serializedChoices),
-					CorrectChoice: question.CorrectChoice,
-					CreatedAt:     time.Now().Unix(),
-				})
-			}
-			if err := s.interviewQuestionRepository.InsertQuestions(mappedQuestions, userId); err != nil {
-				_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusNotStarted)
-				s.log.Errorf("failed to insert questions: %v", err)
-				return
-			}
-			_ = s.userRepository.SetInterviewQuestionStatus(userId, model.InterviewQuestionStatusQuestionsFinished)
 		}()
 		return nil, ErrCreatingInterviewQuestions
 	case model.InterviewQuestionStatusQuestionsNotReady:
@@ -160,6 +138,42 @@ func (s *UserService) GetInterviewQuestions(userId int64) ([]model.InterviewQues
 		return questions, nil
 	}
 	return nil, errors.New("invalid interview question status")
+}
+
+func (s *UserService) generateInterviewQuestions(user model.User) error {
+	topics, err := s.GetInterviewQuestionTopics(user)
+	if err != nil {
+		return fmt.Errorf("failed to get interview question topics: %w", err)
+	}
+	mappedQuestions := make([]model.InterviewQuestion, 0)
+	for _, topic := range topics {
+		questions, err := s.llmService.CreateQuestions(topic, 1) // TODO: increase this when LLM is faster
+		if err != nil {
+			return fmt.Errorf("failed to create questions for topic %s: %w", topic, err)
+		}
+		for _, question := range questions {
+			serializedChoices, err := json.Marshal(question.Choices)
+			if err != nil {
+				return fmt.Errorf("failed to serialize choices for question: %w", err)
+			}
+			mappedQuestions = append(mappedQuestions, model.InterviewQuestion{
+				UserId:        user.ID,
+				Topic:         topic,
+				Content:       question.Content,
+				Choices_:      string(serializedChoices),
+				CorrectChoice: question.CorrectChoice,
+				CreatedAt:     time.Now().Unix(),
+				Explanation:   question.AnswerExplanation,
+			})
+		}
+	}
+	if err := s.interviewQuestionRepository.InsertQuestions(mappedQuestions, user.ID); err != nil {
+		return fmt.Errorf("failed to insert questions: %w", err)
+	}
+	if err := s.userRepository.SetInterviewQuestionStatus(user.ID, model.InterviewQuestionStatusInProgress); err != nil {
+		return fmt.Errorf("failed to set interview question status: %w", err)
+	}
+	return nil
 }
 
 func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, answer int) error {
@@ -181,9 +195,6 @@ func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, an
 	if question.UserId != userId {
 		return &echo.HTTPError{Code: http.StatusForbidden, Message: "You don't have permission to answer this question"}
 	}
-	if question.UserAnswer != nil {
-		return &echo.HTTPError{Code: http.StatusBadRequest, Message: "Question already answered"}
-	}
 	choices, err := question.Choices()
 	if err != nil {
 		return fmt.Errorf("failed to parse choices for question %d: %w", questionId, err)
@@ -199,4 +210,72 @@ func (s *UserService) AnswerInterviewQuestion(userId int64, questionId int64, an
 
 func (s *UserService) UpdateSkillDescription(userId int64, desc string) error {
 	return s.userRepository.SetSkillDescription(userId, desc)
+}
+
+func (s *UserService) UpdateSkillInfo(userId int64, skillInfo model.SkillInfo, setFilled bool) error {
+	return s.userRepository.SetSkillInfo(userId, skillInfo, setFilled)
+}
+
+func (s *UserService) GetInterviewQuestionTopics(user model.User) ([]string, error) {
+	skillInfo, err := user.SkillInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	topics := make([]string, 0)
+
+	scaleFiveLevels := map[int]string{
+		1: "Newbie",
+		2: "Beginner",
+		3: "Intermediate",
+		4: "Advanced",
+		5: "Expert",
+	}
+	scaleThreeLevels := map[int]string{
+		1: "Beginner",
+		2: "Intermediate",
+		3: "Advanced",
+	}
+
+	if skillInfo.KnownLanguages != nil {
+		for _, skill := range skillInfo.KnownLanguages {
+			topics = append(topics, fmt.Sprintf("Bahasa Pemrograman: %s (%s)", skill.Name, scaleThreeLevels[skill.Level]))
+		}
+	}
+
+	if skillInfo.AlgoDSComfort != nil && *skillInfo.AlgoDSComfort > 0 {
+		topics = append(topics, fmt.Sprintf("Algoritma & Struktur Data (%s)", scaleFiveLevels[*skillInfo.AlgoDSComfort]))
+	}
+
+	if skillInfo.AlgoExp != nil && *skillInfo.AlgoExp {
+		topics = append(topics, "Algoritma")
+	}
+
+	if skillInfo.UseGit != nil && *skillInfo.UseGit {
+		topics = append(topics, "Version Control System: Git")
+	}
+
+	if skillInfo.DoCodingChalls != nil && *skillInfo.DoCodingChalls {
+		topics = append(topics, "Coding Challenges / Competitive Programming")
+	}
+
+	if skillInfo.KnownDB != nil {
+		for _, skill := range skillInfo.KnownDB {
+			topics = append(topics, fmt.Sprintf("Database: %s (%s)", skill.Name, scaleThreeLevels[skill.Level]))
+		}
+	}
+
+	return topics, nil
+}
+
+func (s *UserService) SubmitInterview(userId int64) error {
+	return s.userRepository.SubmitInterview(userId)
+}
+
+func (s *UserService) SetTopics(userId int64, topics []string) error {
+	return s.userRepository.SetTopics(userId, topics)
+}
+
+func (s *UserService) SetSkillTreeStatus(userId int64, status string) error {
+	return s.userRepository.SetSkillTreeStatus(userId, status)
 }

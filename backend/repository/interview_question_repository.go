@@ -4,6 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/takiyo0/compfest/backend/database"
 	"github.com/takiyo0/compfest/backend/model"
+	"time"
 )
 
 type InterviewQuestionRepository struct {
@@ -38,7 +39,7 @@ func (r *InterviewQuestionRepository) AnswerQuestion(id int64, answerChoice int)
 func (r *InterviewQuestionRepository) InsertQuestions(questions []model.InterviewQuestion, userId int64) error {
 	values := make([][]interface{}, 0)
 	for _, question := range questions {
-		values = append(values, []interface{}{userId, question.Content, question.Choices_, question.CorrectChoice})
+		values = append(values, []interface{}{userId, question.Topic, question.Content, question.Choices_, question.CorrectChoice, time.Now().Unix(), question.Explanation})
 	}
-	return database.BulkInsert(r.db, "interviewQuestions", []string{"userId", "question", "answerChoices", "correctAnswer"}, values)
+	return database.BulkInsert(r.db, "interviewQuestions", []string{"userId", "topic", "content", "choices", "correctChoice", "createdAt", "explanation"}, values)
 }

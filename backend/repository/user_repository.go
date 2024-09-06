@@ -1,9 +1,12 @@
 package repository
 
 import (
+	"database/sql"
+	"encoding/json"
 	"github.com/google/go-github/v50/github"
 	"github.com/jmoiron/sqlx"
 	"github.com/takiyo0/compfest/backend/model"
+	"strings"
 	"time"
 )
 
@@ -16,7 +19,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 }
 
 func (r *UserRepository) Register(ghUser *github.User) (int64, error) {
-	insert, err := r.db.Exec("INSERT INTO users (id, name, skillDescription, interviewQuestionStatusLastUpdatedAt, createdAt) VALUES (?, ?, ?, ?, ?)", ghUser.GetID(), ghUser.GetName(), "", time.Now().Unix(), time.Now().Unix())
+	insert, err := r.db.Exec("INSERT INTO users (id, name, skillDescription, interviewQuestionStatusLastUpdatedAt, createdAt, topics) VALUES (?, ?, ?, ?, ?, ?)", ghUser.GetID(), ghUser.GetName(), "", time.Now().Unix(), time.Now().Unix(), "")
 	if err != nil {
 		return 0, err
 	}
@@ -38,5 +41,33 @@ func (r *UserRepository) SetInterviewQuestionStatus(id int64, status string) err
 
 func (r *UserRepository) SetSkillDescription(id int64, desc string) error {
 	_, err := r.db.Exec("UPDATE users SET skillDescription = ? WHERE id = ?", desc, id)
+	return err
+}
+
+func (r *UserRepository) SetTopics(id int64, topics []string) error {
+	_, err := r.db.Exec("UPDATE users SET topics = ? WHERE id = ?", strings.Join(topics, "||"), id)
+	return err
+}
+
+func (r *UserRepository) SetSkillInfo(id int64, skillInfo model.SkillInfo, setFilled bool) error {
+	skillInfoStr, err := json.Marshal(skillInfo)
+	if err != nil {
+		return err
+	}
+	_, err = r.db.Exec("UPDATE users SET skillInfo = ?, filledSkillInfo = ?  WHERE id = ?", string(skillInfoStr), setFilled, id)
+	return err
+}
+
+func (r *UserRepository) SubmitInterview(userId int64) error {
+	update, err := r.db.Exec("UPDATE users SET interviewQuestionStatus = ? WHERE id = ? AND interviewQuestionStatus = ? AND (SELECT COUNT(*) FROM interviewQuestions WHERE interviewQuestions.userId = ?) = (SELECT COUNT(*) FROM interviewQuestions WHERE interviewQuestions.userId = ? AND userAnswer IS NOT NULL)", model.InterviewQuestionStatusQuestionsFinished, userId, model.InterviewQuestionStatusInProgress, userId, userId)
+	rowsAffected, _ := update.RowsAffected()
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	return err
+}
+
+func (r *UserRepository) SetSkillTreeStatus(userId int64, status string) error {
+	_, err := r.db.Exec("UPDATE users SET skillTreeStatus = ? WHERE id = ?", status, userId)
 	return err
 }

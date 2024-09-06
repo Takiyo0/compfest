@@ -2,6 +2,7 @@ package evaluation
 
 import (
 	"errors"
+	"github.com/sirupsen/logrus"
 	"github.com/takiyo0/compfest/backend/llm"
 	"github.com/takiyo0/compfest/backend/prompts"
 	"regexp"
@@ -10,15 +11,16 @@ import (
 )
 
 type GenerateQuestionEvaluation struct {
-	e Evaluator
+	log logrus.FieldLogger
+	e   Evaluator
 }
 
-func NewGenerateQuestionEvaluation(e Evaluator) *GenerateQuestionEvaluation {
-	return &GenerateQuestionEvaluation{e}
+func NewGenerateQuestionEvaluation(log logrus.FieldLogger, e Evaluator) *GenerateQuestionEvaluation {
+	return &GenerateQuestionEvaluation{log, e}
 }
 
 func (e *GenerateQuestionEvaluation) CreateChoiceQuestion(topic string) (*Question, error) {
-	result, err := e.e.Completion("indoprog-q", llm.CompletionOptions{
+	result, err := e.e.Completion(llm.Indoprog, llm.CompletionOptions{
 		Prompt: prompts.Format(prompts.GenerateChoiceQuestionPrompt, map[string]string{"topic": topic}),
 	})
 	if err != nil {
@@ -38,31 +40,38 @@ func (e *GenerateQuestionEvaluation) CreateChoiceQuestion(topic string) (*Questi
 
 	content := reContent.FindStringSubmatch(result)
 	if content == nil {
-		return nil, errors.New("content is nil")
+		e.log.Debugf("content is nil: %s", result)
+		return nil, errors.New("parse error: content is nil")
 	}
 	j1 := reJ1.FindStringSubmatch(result)
 	if j1 == nil {
-		return nil, errors.New("j1 is nil")
+		e.log.Debugf("j1 is nil: %s", result)
+		return nil, errors.New("parse error: j1 is nil")
 	}
 	j2 := reJ2.FindStringSubmatch(result)
 	if j2 == nil {
-		return nil, errors.New("j2 is nil")
+		e.log.Debugf("j2 is nil: %s", result)
+		return nil, errors.New("parse error: j2 is nil")
 	}
 	j3 := reJ3.FindStringSubmatch(result)
 	if j3 == nil {
-		return nil, errors.New("j3 is nil")
+		e.log.Debugf("j3 is nil: %s", result)
+		return nil, errors.New("parse error: j3 is nil")
 	}
 	j4 := reJ4.FindStringSubmatch(result)
 	if j4 == nil {
-		return nil, errors.New("j4 is nil")
+		e.log.Debugf("j4 is nil: %s", result)
+		return nil, errors.New("parse error: j4 is nil")
 	}
 	answer := reAnswer.FindStringSubmatch(result)
 	if answer == nil {
-		return nil, errors.New("answer is nil")
+		e.log.Debugf("answer is nil: %s", result)
+		return nil, errors.New("parse error: answer is nil")
 	}
 	explanation := reExplanation.FindStringSubmatch(result)
 	if explanation == nil {
-		return nil, errors.New("explanation is nil")
+		e.log.Debugf("explanation is nil: %s", result)
+		return nil, errors.New("parse error: explanation is nil")
 	}
 
 	choices := []string{trimWhitespace(j1[1]), trimWhitespace(j2[1]), trimWhitespace(j3[1]), trimWhitespace(j4[1])}

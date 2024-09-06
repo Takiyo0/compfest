@@ -7,4 +7,7 @@ const (
 	IndoprogC = "indoprog-c"
 	// IndoprogI is used to generate question topic based on the user skill
 	IndoprogI = "indoprog-i"
+
+	// Indoprog is a general model
+	Indoprog = "indoprog"
 )

@@ -24,3 +24,7 @@ func BindAndValidate(ctx echo.Context, req interface{}) error {
 func Sess(ctx echo.Context) *model.Session {
 	return ctx.Get("session").(*model.Session)
 }
+
+func Tre(ctx echo.Context) *model.SkillTree {
+	return ctx.Get("skillTree").(*model.SkillTree)
+}
