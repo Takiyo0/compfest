@@ -1,13 +1,19 @@
 "use client"
 
-import Image from "next/image";
 import {LogoComponent} from "@/app/assets/images/logo";
 import {Dropdown, DropdownItem, DropdownMenu, DropdownTrigger} from "@nextui-org/react";
 import {User} from "@nextui-org/user";
 import {useWindowSize} from "@react-hook/window-size";
+import {deleteCookie} from "cookies-next";
 
 export default function Header({userInfo, center = false}: { userInfo: any, center?: boolean }) {
     const [width] = useWindowSize();
+
+    function logout() {
+        deleteCookie('Authorization');
+        window.location.href = '/login';
+    }
+
     return (
         <div
             className={
@@ -48,19 +54,14 @@ export default function Header({userInfo, center = false}: { userInfo: any, cent
                         <p className="font-bold">Currently not</p>
                         <p className="font-bold">Signed in</p>
                     </DropdownItem>}
-                    <DropdownItem key="settings">
-                        My Settings
+                    <DropdownItem key="home">
+                        Home
                     </DropdownItem>
-                    <DropdownItem key="team_settings">Team Settings</DropdownItem>
-                    <DropdownItem key="analytics">
-                        Analytics
+                    <DropdownItem key="archive">Arsip Pertanyaan</DropdownItem>
+                    <DropdownItem key="chat">
+                        Chat
                     </DropdownItem>
-                    <DropdownItem key="system">System</DropdownItem>
-                    <DropdownItem key="configurations">Configurations</DropdownItem>
-                    <DropdownItem key="help_and_feedback">
-                        Help & Feedback
-                    </DropdownItem>
-                    <DropdownItem key="logout" color="danger">
+                    <DropdownItem key="logout" color="danger" onClick={logout}>
                         Log Out
                     </DropdownItem>
                 </DropdownMenu>
