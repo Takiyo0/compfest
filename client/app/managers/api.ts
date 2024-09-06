@@ -3,8 +3,16 @@ import CryptoJS from "crypto-js";
 import {opt} from "ts-interface-checker";
 
 export class ApiManager {
-    public static BaseUrl = "https://c3ff-180-244-134-175.ngrok-free.app";
+    public static BaseUrl = "https://8fd5-180-244-134-175.ngrok-free.app";
     public static encryptionKey = "bad7a50445665cb529f402ad7e78650cd9877725b8499e3597c6125e89f32766";
+
+    public static async GetOauthCode() {
+        return this.Get<OauthCodeResponse>('user/auth-code');
+    }
+
+    public static async SendOauthCode(code: string, state: string) {
+        return this.Post<OauthCallbackResponse>(`user/auth-callback?code=${code}&state=${state}`);
+    }
 
     public static async getUser(signal: AbortSignal, token: string): Promise<UserInfoResponse> {
         return this.Get<UserInfoResponse>('user/info', signal, token);
@@ -63,7 +71,7 @@ export class ApiManager {
         return this.Get<AnsweredQuestionsResponse>('tree/archive', signal, token);
     }
 
-    private static async Post<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
+    private static async Post<T extends BaseApiResponse>(path: string, signal?: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
         try {
             let selfOptions: AxiosRequestConfig = {
                 headers: {
@@ -96,7 +104,7 @@ export class ApiManager {
         }
     }
 
-    private static async Get<T extends BaseApiResponse>(path: string, signal: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
+    private static async Get<T extends BaseApiResponse>(path: string, signal?: AbortSignal, token: string = "", options?: AxiosRequestConfig): Promise<T> {
         try {
             let selfOptions: AxiosRequestConfig = {
                 headers: {
@@ -169,6 +177,19 @@ export interface AnsweredQuestionsResponse extends BaseApiResponse {
 export interface InterviewAnswerResponse extends BaseApiResponse {
     data: {
         message: string;
+    }
+}
+
+export interface OauthCodeResponse extends BaseApiResponse {
+    data: {
+        loginUrl: string;
+        state: string;
+    }
+}
+
+export interface OauthCallbackResponse extends BaseApiResponse {
+    data: {
+        token: string;
     }
 }
 
