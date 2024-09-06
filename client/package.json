@@ -21,6 +21,7 @@
     "ldrs": "^1.0.2",
     "lottie-react": "^2.4.0",
     "next": "14.2.5",
+    "node-os-utils": "^1.3.7",
     "react": "^18",
     "react-d3-tree": "^3.6.2",
     "react-dom": "^18",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^20",
+    "@types/node-os-utils": "^1.3.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-tree-graph": "^8.0.0",
