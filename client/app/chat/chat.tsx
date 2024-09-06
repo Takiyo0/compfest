@@ -116,18 +116,16 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
         }
 
         setChatLoading(false);
-        console.log(statusCode);
     }
 
     async function changeTopic(id: number) {
         if (isNewChat.current) {
             isNewChat.current = false;
-            return console.log("skipped")
+            return;
         }
         if (id == topicId) return;
         if (id == -1) return;
 
-        console.log("changing topic");
         controller.current.abort();
         controller.current = new AbortController();
         setChatLoading(true);
@@ -189,7 +187,7 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
                         New Chat
                     </Button>
                     <Tabs aria-label="Options" color="primary" isVertical={true} variant={"light"} className={"w-full"}
-                          items={topicData}
+                          items={topicId == -1 ? [{id: -1, title: "New Chat"}, ...topicData] : topicData}
                           selectedKey={topicId}
                           onSelectionChange={(d) => changeTopic(d as number)}>
                         {(item) => (
@@ -198,7 +196,7 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
                                 title={
                                     <div
                                         className="mb-1 w-72 align-baseline text-[1rem] pl-2 pr-2 text-left overflow-hidden text-ellipsis whitespace-nowrap block">
-                                        {item.title} ({item.id})
+                                        {item.title}
                                     </div>
                                 }
                             />
