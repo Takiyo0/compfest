@@ -60,6 +60,7 @@ func (c *AssistantController) handlePrompt(ctx echo.Context) error {
 
 	ctx.Response().Status = http.StatusOK
 	ctx.Response().Header().Set("Content-Type", "text/event-stream")
+	ctx.Response().Header().Set("X-Accel-Buffering", "no")
 
 	if _, err := c.assistantService.Chat(Sess(ctx).UserId, req.ChatId, req.Prompt, func(content string) error {
 		fmt.Print(content)
