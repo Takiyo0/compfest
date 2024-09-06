@@ -44,9 +44,6 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
 
     const Authorization = getCookie('Authorization');
 
-    React.useEffect(() => console.log(chatLoading), [chatLoading])
-
-
     useEffect(() => {
         return () => controller.current.abort();
     }, []);
@@ -128,6 +125,7 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
             return console.log("skipped")
         }
         if (id == topicId) return;
+        if (id == -1) return;
 
         console.log("changing topic");
         controller.current.abort();
