@@ -1,21 +1,15 @@
-import {Manrope} from "next/font/google";
-import AIProcessing from "@/app/AIProcessing";
-import HomePage from "@/app/Homepage";
-import {ApiManager} from "@/app/managers/api";
-import {redirect} from "next/navigation";
 import {getCookie} from "cookies-next";
 import {cookies} from "next/headers";
-import { Metadata } from 'next';
-
-const manrope = Manrope({subsets: ["latin"]});
-
+import {ApiManager} from "@/app/managers/api";
+import {redirect} from "next/navigation";
+import Archive from "@/app/archive/Archive";
+import {Metadata} from "next";
 
 export const metadata: Metadata = {
     title: 'Kuduga AI',
     description: 'platform untuk belajar pemrograman',
 };
-
-export default async function Home() {
+export default async function Page() {
     const authorization = getCookie("Authorization", {cookies});
     const abort = new AbortController();
 
@@ -23,7 +17,7 @@ export default async function Home() {
     if (statusCode != 200 || !user.userId) return redirect("/login");
     if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
-    const {data} = await ApiManager.GetTree(abort.signal, authorization ?? "");
+    const {data} = await ApiManager.GetAnsweredQuestions(abort.signal, authorization ?? "");
 
-    return data.ready ? <HomePage data={data.skillTree} userData={user}/> : <AIProcessing userData={user}/>;
+    return <Archive userData={user} data={data}/>;
 }
