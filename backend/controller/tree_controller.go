@@ -185,17 +185,18 @@ func (c *SkillTreeController) handleGetSkillTreeEntryContent(ctx echo.Context) e
 
 	type respType struct {
 		Ready   bool   `json:"ready"`
+		EntryId int64  `json:"entryId"`
 		Content string `json:"content,omitempty"`
 	}
 
 	content, err := c.skillTreeService.GetSkillTreeEntryContent(req.EntryID)
 	if err != nil {
 		if err.Error() == "generating" {
-			return ctx.JSON(http.StatusOK, &respType{Ready: false, Content: ""})
+			return ctx.JSON(http.StatusOK, &respType{Ready: false, EntryId: req.EntryID, Content: ""})
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, &respType{Ready: true, Content: *content})
+	return ctx.JSON(http.StatusOK, &respType{Ready: true, EntryId: req.EntryID, Content: *content})
 }
 
 func (c *SkillTreeController) handleGetArchive(ctx echo.Context) error {

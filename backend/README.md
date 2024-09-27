@@ -324,6 +324,7 @@ Response:
 ```ts
 interface LearnContent {
     ready: boolean;
+    entryId: number;
     content?: string;
 }
 ```
