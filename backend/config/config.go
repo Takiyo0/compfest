@@ -18,7 +18,8 @@ type Config struct {
 	IndoprogUrl  string `env:"INDOPROG_URL"`
 	IndoprogCUrl string `env:"INDOPROGC_URL"`
 
-	CorsOrigin string `env:"CORS_ORIGIN"`
+	CorsOrigin  string `env:"CORS_ORIGIN"`
+	GithubToken string `env:"GITHUB_TOKEN"`
 }
 
 var Global Config
@@ -35,5 +36,7 @@ func Load() (Config, error) {
 	if err := env.Parse(&cfg); err != nil {
 		return Config{}, fmt.Errorf("failed to load env: %w", err)
 	}
+
+	Global = cfg
 	return cfg, nil
 }
