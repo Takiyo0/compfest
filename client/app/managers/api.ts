@@ -280,6 +280,7 @@ export interface TreeQuestionsResponse extends BaseApiResponse {
 export interface TreeEntryResponse extends BaseApiResponse {
     data: {
         ready: boolean;
+        entryId: number;
         content?: string;
     }
 }

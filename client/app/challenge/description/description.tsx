@@ -300,9 +300,9 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                             classNames={{base: "ml-7"}}
                             onChange={(v: any) => {
                                 setAnswers(d => {
-                                    const newAnswers = [...d]; // Create a copy of the array
-                                    newAnswers[index].value = v; // Update the specific value
-                                    return newAnswers; // Return the updated array
+                                    const newAnswers = [...d];
+                                    newAnswers[index].value = v;
+                                    return newAnswers;
                                 });
                             }}
                             getValue={(v: SliderValue) => data.sliderOptions!.values![v as number] || v.toString()}
@@ -324,6 +324,14 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                         </RadioGroup>
                     </div>
                     else if (type == "checkbox") {
+                        const limits = [{id: "knownLanguages", limit: 3}, {id: "knownFw", limit: 2}, {
+                            id: "knownDB",
+                            limit: 2
+                        }];
+                        const needLimit = ["knownLanguages", "knownFw", "knownDB"].includes(data.id);
+                        const answerCount = answers.find(x => x.id == data.id)?.value?.length ?? 0;
+                        const limit = limits.find(x => x.id == data.id)?.limit ?? 99;
+                        const hasReachedLimit = needLimit && answerCount >= limit;
                         return (
                             <div key={index}>
                                 <p className={"mb-2"}>{index + 1}. {data.question}</p>
@@ -335,7 +343,7 @@ export default function ChallengeDescription({userData}: { userData: UserInfoRes
                                         name: string;
                                         level: 1 | 2 | 3
                                     }) => x.name) || []}
-                                    onValueChange={(v) => setAnswers(d => {
+                                    onValueChange={(v) => (hasReachedLimit && v.length >= limit) ? toast.error(`Anda hanya bisa memilih ${limit} pada saat ini. Tim kami sedang melakukan optimisasi.`) : setAnswers(d => {
                                         const newAnswers = d.map(x => x.id == data.id
                                             ? {
                                                 ...x,

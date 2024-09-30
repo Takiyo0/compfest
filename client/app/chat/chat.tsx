@@ -41,12 +41,26 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
 
     let controller = React.useRef(new AbortController());
     const isNewChat = React.useRef(false);
+    const chatRequest = React.useRef();
+    const inputRef = React.useRef("");
+
+    useEffect(() => {
+        inputRef.current = input;
+    }, [input]);
 
     const Authorization = getCookie('Authorization');
 
     useEffect(() => {
-        return () => controller.current.abort();
+        // window.addEventListener("keydown", listenToEnter);
+        return () => {
+            controller.current.abort();
+            // window.removeEventListener("keydown", listenToEnter);
+        };
     }, []);
+
+    async function listenToEnter(event: KeyboardEvent) {
+        if (event.key == "Enter" && inputRef.current.trim().length != 0) SendMessage(inputRef.current, chats);
+    }
 
     function CreateNewChat() {
         if (topicId == -1) return;
@@ -61,6 +75,7 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
 
     async function SendMessage(content: string, currentChats: any) {
         let newTopicId;
+        if (content.trim().length == 0) return;
         if (topicId == -1) {
             const {data, statusCode} = await ApiManager.CreateChatTopic(controller.current.signal, Authorization ?? "");
             if (statusCode != 200) return setError("Unable to create chat");
@@ -89,6 +104,7 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
 
         const onAbort = () => eventSource.close();
         let text = '';
+        chatRequest
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.stop) {
@@ -103,6 +119,12 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
             setChats([assistantChat, userChat, ...currentChats]);
         }
         controller.current.signal.addEventListener("abort", onAbort);
+    }
+
+    async function stopOngoingRequest() {
+        if (!isGenerating) return;
+
+
     }
 
     async function GetAndParseMessages(loading: boolean = false, id?: number) {
@@ -264,7 +286,6 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
                         className={"mt-auto w-full max-w-[70%] h-14 bg-[#8888883b] rounded-full flex items-center " + (width < 1024 ? "max-w-full" : "")}>
                         <input
                             type="text"
-                            disabled={isGenerating}
                             className={"w-full h-full rounded-full bg-[#88888800] p-4 text-white text-[1rem] outline-0 ml-3"}
                             placeholder={"Type here to send a message..."}
                             value={input}
