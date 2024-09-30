@@ -28,5 +28,7 @@ export default async function Page({
     if (!user.filledSkillInfo || (user.filledSkillInfo && user.interviewQuestionStatus != 'SUCCESS')) return redirect("/challenge/interview");
 
     const {data} = await ApiManager.GetTreeQuestions(abort.signal, authorization ?? "", Number(questionId));
+    // @ts-ignore
+    if (!isNaN(data.questions![0].correctAnswer ?? "")) return redirect(`/ganbatte/${questionId}/archive`);
     return <GanbattePage userData={user} questions={data} questionId={Number(questionId)}/>
 }

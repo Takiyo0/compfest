@@ -1,6 +1,7 @@
 'use client'
 
 import {ApiManager, TreeResponse, UserInfoResponse} from "@/app/managers/api";
+import {BiSolidLeaf} from "react-icons/bi";
 import {Button, Tab, Tabs} from "@nextui-org/react";
 import React from "react";
 import {Manrope} from "next/font/google";
@@ -10,11 +11,14 @@ import toast from "react-hot-toast";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import Header from "@/app/components/header";
 import {MdOutlineArrowBack, MdQuiz, MdReviews} from "react-icons/md";
+import { RiProgress3Fill } from "react-icons/ri";
 import {useRouter} from "next/navigation";
 import {motion, useCycle} from "framer-motion";
 import {useWindowSize} from "@react-hook/window-size";
 import {LogoComponent} from "@/app/assets/images/logo";
+import { IoMdCloudDone } from "react-icons/io";
 import Footer from "@/app/components/footer";
+import { FcQuestions } from "react-icons/fc";
 
 const manrope = Manrope({subsets: ["latin"]});
 
@@ -26,7 +30,10 @@ export default function Material({userData, skillTree}: {
     const router = useRouter();
     const [isOpen, cycleOpen] = useCycle(-300, 0);
     const [selectedEntry, setSelectedEntry] = React.useState(0);
-    const [contents, setContents] = React.useState(new Array(skillTree.entries.length).fill(""));
+    const [contents, setContents] = React.useState<{
+        entryId: number,
+        content: string
+    }[]>(new Array(skillTree.entries.length).fill(0).map((_, i) => ({entryId: skillTree.entries[i].id, content: ""})));
     const {queue, addQueue, removeQueue} = useQuestionQueue();
 
 
@@ -47,13 +54,17 @@ export default function Material({userData, skillTree}: {
             if (readyData.length > 0) {
                 setContents(x => {
                     const temp = [...x];
-                    readyData.forEach(x => temp[x.id] = x.data.data.content);
+                    readyData.forEach(x => temp[temp.findIndex(a => a.entryId == x.id)]!.content = x.data.data.content ?? "Unknown error. Please reload");
                     return temp;
                 });
                 readyData.map(x => removeQueue(x.id));
             }
         }, 3000);
     }, [queue]);
+
+    React.useEffect(() => {
+        console.log(contents);
+    }, [contents])
 
     React.useEffect(() => {
         async function getLoader() {
@@ -78,7 +89,7 @@ export default function Material({userData, skillTree}: {
     }, [selectedEntry]);
 
     async function addToQueue(id: number, index: number) {
-        if (contents[index] != "") return;
+        if (contents[index].content != "") return;
         if (queue.find(x => x.entryId == id)) return;
         const {
             data,
@@ -88,7 +99,7 @@ export default function Material({userData, skillTree}: {
         if (data.ready) {
             setContents(x => {
                 const temp = [...x];
-                temp[index] = data.content;
+                temp[temp.findIndex(a => a.entryId == id)]!.content = data.content ?? "Unknown error. Please try again later";
                 return temp;
             });
         } else addQueue({entryId: id, status: "PROCESSING"});
@@ -121,7 +132,7 @@ export default function Material({userData, skillTree}: {
                 <h1 className={"ml-2 text-xl font-semibold"}>{skillTree.finished ? "Ayo review hasil Anda" : "Siap mengerjakan soal?"}</h1>
                 <Button className={"w-full mt-2 mb-3"} color={"primary"}
                         onPress={() => router.push(`/ganbatte/${skillTree.id}${skillTree.finished ? "/archive" : ""}`)}
-                        startContent={skillTree.finished ? <MdReviews size={25}/> : <MdQuiz
+                        startContent={skillTree.finished ? <MdReviews size={25}/> : <FcQuestions color={"white"}
                             size={25}/>}>{skillTree.finished ? "Review hasil" : "Kerjakan Latihan Soal"}</Button>
                 <h1 className={"ml-2 text-xl font-semibold"}>Materi</h1>
                 <Tabs aria-label="Options" color="primary" isVertical={true} variant={"light"} className={"w-full"}
@@ -133,13 +144,17 @@ export default function Material({userData, skillTree}: {
                       onSelectionChange={(d) => setSelectedEntry(d as number)}>
                     {(item: any) => {
                         const index = skillTree.entries.findIndex(x => x.id === item.id);
+                        let state = <BiSolidLeaf size={20} className={"shrink-0"} color={"#ff5c5c"}/>
+                        if (contents.find(x => x.entryId == item.id)?.content != "") state = <IoMdCloudDone size={20} className={"shrink-0"} color={"#67ff5c"}/>
+                        else if (queue.find(x => x.entryId == item.id)) state = <RiProgress3Fill size={20} className={"shrink-0"} color={"#fffc5c"}/>
                         return <Tab
                             key={index}
 
                             title={
                                 <div
-                                    className="mb-1 w-64 align-baseline text-[.9rem] pl-2 pr-2 text-left overflow-hidden text-ellipsis whitespace-nowrap block">
-                                    {item.title} ({item.id})
+                                    className="mb-1 w-64 align-baseline text-[.9rem] pl-0 pr-2 text-left overflow-hidden flex items-center flex-grow-1">
+                                    {state}
+                                    <p className={"ml-1 truncate"}>{item.title}</p>
                                 </div>
                             }
                         />
@@ -152,7 +167,7 @@ export default function Material({userData, skillTree}: {
                 <h1 className={"text-2xl font-semibold"}>{skillTree.name}</h1>
                 <h2 className={"text-xl text-gray-400"}>{skillTree.entries[selectedEntry]?.title}</h2>
                 <hr className={"border-gray-400 mt-1"}/>
-                {!contents[selectedEntry] ? <div className={"flex flex-1 justify-center items-center flex-col"}>
+                {!contents[selectedEntry].content ? <div className={"flex flex-1 justify-center items-center flex-col"}>
                         <l-helix
                             size="200"
                             speed="2.5"
@@ -160,7 +175,7 @@ export default function Material({userData, skillTree}: {
                         <p className={"mt-7 text-2xl text-center"}>Sedang menyiapkan materi... Estimasi waktu 1-2 menit.
                             Harap menunggu</p>
                     </div> :
-                    <MarkdownPreview source={contents[selectedEntry]?.trim() ?? ""}
+                    <MarkdownPreview source={contents[selectedEntry]?.content?.trim() ?? ""}
                                      className={"mt-3"}
                                      style={{backgroundColor: "transparent"}}/>}
             </div>

@@ -4,20 +4,47 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/google/go-github/v50/github"
 	"github.com/labstack/echo/v4"
+	"github.com/takiyo0/compfest/backend/config"
 	"github.com/takiyo0/compfest/backend/controller/gate"
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/module/random"
 	"github.com/takiyo0/compfest/backend/service"
 	"golang.org/x/oauth2"
+	"io"
+	"log"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 )
 
 type UserController struct {
 	userService *service.UserService
 	oauthCfg    *oauth2.Config
+}
+
+type UserRepoCacheEntry struct {
+	Data      []Repository
+	Timestamp time.Time
+}
+
+type Repository struct {
+	LanguagesUrl string `json:"languages_url"`
+}
+
+var userRepoCache = make(map[string]UserRepoCacheEntry)
+var repoLanguagesCache = make(map[string][]string)
+var cacheLock sync.RWMutex
+
+const cacheExpiration = time.Hour
+
+func isCacheExpired(entry UserRepoCacheEntry) bool {
+	return time.Since(entry.Timestamp) > cacheExpiration
 }
 
 func NewUserController(userService *service.UserService, oauthCfg *oauth2.Config) *UserController {
@@ -32,6 +59,7 @@ func (c *UserController) SetUp(e *echo.Echo) {
 	g.GET("/auth-callback", c.handleAuthCallback)
 	g.POST("/logout", c.handleLogout, authGate)
 	g.GET("/info", c.handleInfo, authGate)
+	g.GET("/languages", c.handleLanguages, authGate)
 
 	qg := g.Group("/questions", authGate)
 	qg.GET("/", c.handleGetQuestions)
@@ -112,6 +140,119 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 	})
 }
 
+func (c *UserController) handleLanguages(ctx echo.Context) error {
+	sess := Sess(ctx)
+	user, err := c.userService.FindUserById(sess.UserId)
+	if err != nil {
+		return err
+	}
+
+	token := config.Global.GithubToken
+	if token == "" {
+		return ctx.JSON(http.StatusOK, []string{})
+	}
+
+	cacheLock.RLock()
+	cachedEntry, found := userRepoCache[user.Name]
+	cacheLock.RUnlock()
+
+	var repos []Repository
+
+	if found && !isCacheExpired(cachedEntry) {
+		fmt.Printf("cache hit for user repos: %s\n", user.Name)
+		repos = cachedEntry.Data
+	} else {
+		url := fmt.Sprintf("https://api.github.com/users/%s/repos", user.Name)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		defer func(Body io.ReadCloser) {
+			closeErr := Body.Close()
+			if closeErr != nil {
+				log.Println(closeErr)
+			}
+		}(resp.Body)
+
+		log.Println("Repo response status:", resp.StatusCode)
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to fetch repos: %s", resp.Status)
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(&repos)
+		if err != nil {
+			return err
+		}
+
+		cacheLock.Lock()
+		userRepoCache[user.Name] = UserRepoCacheEntry{
+			Data:      repos,
+			Timestamp: time.Now(),
+		}
+		cacheLock.Unlock()
+	}
+
+	var allLanguages []string
+	for _, repo := range repos {
+		cacheLock.RLock()
+		cachedLanguages, found := repoLanguagesCache[repo.LanguagesUrl]
+		cacheLock.RUnlock()
+
+		if found {
+			fmt.Printf("Found cached languages for repo: %s\n", repo.LanguagesUrl)
+			allLanguages = append(allLanguages, cachedLanguages...)
+			continue
+		}
+
+		langReq, err := http.NewRequest("GET", repo.LanguagesUrl, nil)
+		if err != nil {
+			return err
+		}
+		langReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		langResp, err := http.DefaultClient.Do(langReq)
+		if err != nil {
+			return err
+		}
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				log.Println(err)
+			}
+		}(langResp.Body)
+
+		if langResp.StatusCode != http.StatusOK {
+			log.Printf("Failed to fetch languages for repo: %s, status: %d\n", repo.LanguagesUrl, langResp.StatusCode)
+			continue
+		}
+
+		var languages map[string]interface{}
+		err = json.NewDecoder(langResp.Body).Decode(&languages)
+		if err != nil {
+			return err
+		}
+
+		var langList []string
+		for lang := range languages {
+			allLanguages = append(allLanguages, lang)
+			langList = append(langList, lang)
+		}
+
+		cacheLock.Lock()
+		repoLanguagesCache[repo.LanguagesUrl] = langList
+		cacheLock.Unlock()
+	}
+
+	return ctx.JSON(http.StatusOK, allLanguages)
+}
+
 func (c *UserController) handleGetQuestions(ctx echo.Context) error {
 	user, err := c.userService.FindUserById(Sess(ctx).UserId)
 	if err != nil {
@@ -131,7 +272,7 @@ func (c *UserController) handleGetQuestions(ctx echo.Context) error {
 	}
 	questions, err := c.userService.GetInterviewQuestions(Sess(ctx).UserId)
 	if err != nil {
-		if err == service.ErrCreatingInterviewQuestions {
+		if errors.Is(err, service.ErrCreatingInterviewQuestions) {
 			return ctx.JSON(http.StatusOK, &respType{Ready: false})
 		}
 		return err
@@ -179,7 +320,7 @@ func (c *UserController) handleAnswerQuestion(ctx echo.Context) error {
 
 func (c *UserController) handleSubmitInterview(ctx echo.Context) error {
 	if err := c.userService.SubmitInterview(Sess(ctx).UserId); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return echo.NewHTTPError(http.StatusBadRequest, "An error occurred. The interview might not be ready yet or has been submitted.")
 		}
 		return err

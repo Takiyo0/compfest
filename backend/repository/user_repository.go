@@ -19,7 +19,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 }
 
 func (r *UserRepository) Register(ghUser *github.User) (int64, error) {
-	insert, err := r.db.Exec("INSERT INTO users (id, name, skillDescription, interviewQuestionStatusLastUpdatedAt, createdAt, topics) VALUES (?, ?, ?, ?, ?, ?)", ghUser.GetID(), ghUser.GetName(), "", time.Now().Unix(), time.Now().Unix(), "")
+	insert, err := r.db.Exec("INSERT INTO users (id, name, skillDescription, interviewQuestionStatusLastUpdatedAt, createdAt, topics) VALUES (?, ?, ?, ?, ?, ?)", ghUser.GetID(), ghUser.GetLogin(), "", time.Now().Unix(), time.Now().Unix(), "")
 	if err != nil {
 		return 0, err
 	}
