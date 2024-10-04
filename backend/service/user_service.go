@@ -11,6 +11,7 @@ import (
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/module/random"
 	"github.com/takiyo0/compfest/backend/repository"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -91,6 +92,7 @@ func (s *UserService) GetSessionByToken(token string) (*model.Session, error) {
 	}
 
 	if session.Token != tok {
+		log.Printf("session token: %s, token: %s", session.Token, tok)
 		return nil, &echo.HTTPError{Code: 401, Message: "Invalid token"}
 	}
 

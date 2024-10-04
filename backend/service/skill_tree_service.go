@@ -82,7 +82,7 @@ func (s *SkillTreeService) GetSkillTreeByUser(user model.User) ([]model.SkillTre
 		return nil, &echo.HTTPError{Code: 400, Message: "interview questions not finished"}
 	}
 
-	if user.SkillTreeStatus == model.SkillTreeContentStatusGenerating {
+	if user.SkillTreeStatus == model.SkillTreeStatusNotReady {
 		return nil, errors.New("generating")
 	}
 

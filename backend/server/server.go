@@ -61,6 +61,7 @@ func (s *Server) Start() error {
 	interviewQuestionRepository := repository.NewInterviewQuestionRepository(db)
 	assistantRepository := repository.NewAssistantRepository(db)
 	skillTreeRepository := repository.NewSkillTreeRepository(db)
+	challengeRepository := repository.NewChallengeRepository(db)
 
 	llmService := service.NewLLMService(s.log, s.ai)
 
@@ -74,9 +75,14 @@ func (s *Server) Start() error {
 	skillTreeService.SetLLMService(llmService)
 	skillTreeService.SetUserService(userService)
 
+	challengeService := service.NewChallengeService(s.log, userService, challengeRepository)
+	challengeService.SetUserService(userService)
+	challengeService.SetChallengeRepository(challengeRepository)
+
 	s.addController(controller.NewUserController(userService, s.cfg.Oauth2.Parse()))
 	s.addController(controller.NewAssistantController(assistantService, userService))
 	s.addController(controller.NewSkillTreeController(userService, skillTreeService))
+	s.addController(controller.NewChallengeController(userService, challengeService, challengeRepository))
 
 	return s.e.Start(fmt.Sprintf(":%d", s.cfg.AppPort))
 }

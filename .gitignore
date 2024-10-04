@@ -4,3 +4,4 @@ start-backend.exe
 start-backend
 node_modules
 client/node_modules
+/dockerfiles/mysql_docker/mysql/

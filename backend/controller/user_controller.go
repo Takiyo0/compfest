@@ -128,6 +128,7 @@ func (c *UserController) handleInfo(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return ctx.JSON(http.StatusOK, map[string]any{
 		"userId":                  sess.UserId,
 		"username":                user.Name,

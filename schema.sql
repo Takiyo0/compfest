@@ -88,5 +88,79 @@ CREATE TABLE assistantChatMessages (
     FOREIGN KEY (userId) REFERENCES users(id)
 ) ENGINE = InnoDB;
 
+CREATE TABLE weeklyChallenges (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    yearTime INT NOT NULL,
+    weekTime INT NOT NULL
+) ENGINE = InnoDB;
+
+CREATE TABLE weeklyQuestionsTopics (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    language VARCHAR(255) NOT NULL,
+    difficulty ENUM('EASY', 'MEDIUM', 'HARD') NOT NULL,
+    weeklyChallengeId BIGINT NOT NULL,
+    description TEXT NOT NULL,
+    FOREIGN KEY (weeklyChallengeId) REFERENCES weeklyChallenges(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE weeklyQuestions (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    topicId BIGINT NOT NULL,
+    content MEDIUMTEXT NOT NULL,
+    choices MEDIUMTEXT NOT NULL,
+    point INT NOT NULL DEFAULT 1,
+    correctChoice INT NOT NULL,
+    explanation TEXT NOT NULL,
+    createdAt BIGINT NOT NULL,
+    FOREIGN KEY (topicId) REFERENCES weeklyQuestionsTopics(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE challengeGroups (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    createdAt BIGINT NOT NULL
+) ENGINE = InnoDB;
+
+CREATE TABLE challengeGroupMembers (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    userId BIGINT NOT NULL,
+    groupId BIGINT NOT NULL,
+    isLeader BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (userId) REFERENCES users(id),
+    FOREIGN KEY (groupId) REFERENCES challengeGroups(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE weeklyQuestionsSessions (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    userId BIGINT NOT NULL,
+    challengeId BIGINT NOT NULL,
+    questionId BIGINT NOT NULL,
+    groupId INT NOT NULL DEFAULT 0,
+    attempt INT NOT NULL DEFAULT 1,
+    isLatest BOOLEAN NOT NULL DEFAULT TRUE,
+    state ENUM('NOT_STARTED', 'IN_PROGRESS', 'FINISHED') DEFAULT 'NOT_STARTED' NOT NULL,
+    score INT NOT NULL DEFAULT 0,
+    startedAt BIGINT NOT NULL,
+    finishedAt BIGINT,
+    FOREIGN KEY (userId) REFERENCES users(id),
+    FOREIGN KEY (questionId) REFERENCES weeklyQuestions(id)
+) ENGINE = InnoDB;
+
+CREATE TABLE weeklyQuestionsAnswers (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    userId BIGINT NOT NULL,
+    questionId BIGINT NOT NULL,
+    answer INT,
+    firstAccessTime BIGINT NOT NULL,
+    timeDone BIGINT,
+    sessionId BIGINT NOT NULL,
+    createdAt BIGINT NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(id),
+    FOREIGN KEY (questionId) REFERENCES weeklyQuestions(id),
+    FOREIGN KEY (sessionId) REFERENCES weeklyQuestionsSessions(id)
+) ENGINE = InnoDB;
+
 -- END
 -- START: Initial data
