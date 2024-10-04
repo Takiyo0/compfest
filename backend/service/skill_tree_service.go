@@ -9,7 +9,6 @@ import (
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/module/random"
 	"github.com/takiyo0/compfest/backend/repository"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -44,32 +43,55 @@ func (s *SkillTreeService) calculateTopics(user model.User) ([]string, error) {
 		return nil, err
 	}
 
-	type topicScore struct {
-		Topic string
-		Score int
-	}
+	topics := make([]string, 0)
+	roleLanguagesTopics := make([]string, 0)
+	languagesToLearnTopics := make([]string, 0)
+	toolsToLearnTopics := make([]string, 0)
 
-	topicScores := make(map[string]int)
-	for _, question := range interviewQuestions {
-		if _, ok := topicScores[question.Topic]; !ok {
-			topicScores[question.Topic] = 0
+	for _, iq := range interviewQuestions {
+		switch iq.TopicType {
+		case model.InterviewQuestionTopicTypeLanguage:
+			dupe := false
+			for _, topic := range languagesToLearnTopics {
+				if topic == iq.Topic {
+					dupe = true
+					break
+				}
+			}
+			if !dupe {
+				languagesToLearnTopics = append(languagesToLearnTopics, iq.Topic)
+			}
+			break
+		case model.InterviewQuestionTopicTypeRoleLanguage:
+			dupe := false
+			for _, topic := range roleLanguagesTopics {
+				if topic == iq.Topic {
+					dupe = true
+					break
+				}
+			}
+			if !dupe {
+				roleLanguagesTopics = append(roleLanguagesTopics, iq.Topic)
+			}
+			break
+		case model.InterviewQuestionTopicTypeTool:
+			dupe := false
+			for _, topic := range toolsToLearnTopics {
+				if topic == iq.Topic {
+					dupe = true
+					break
+				}
+			}
+			if !dupe {
+				toolsToLearnTopics = append(toolsToLearnTopics, iq.Topic)
+			}
+			break
 		}
-		topicScores[question.Topic] += 1
 	}
 
-	topicScoresSlice := make([]topicScore, 0, len(topicScores))
-	for topic, score := range topicScores {
-		topicScoresSlice = append(topicScoresSlice, topicScore{Topic: topic, Score: score})
-	}
-
-	sort.Slice(topicScoresSlice, func(i, j int) bool {
-		return topicScoresSlice[i].Score < topicScoresSlice[j].Score
-	})
-
-	topics := make([]string, 0, len(topicScoresSlice))
-	for _, ts := range topicScoresSlice {
-		topics = append(topics, ts.Topic)
-	}
+	topics = append(topics, languagesToLearnTopics...)
+	topics = append(topics, roleLanguagesTopics...)
+	topics = append(topics, toolsToLearnTopics...)
 
 	return topics, nil
 }

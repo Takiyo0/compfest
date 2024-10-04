@@ -161,22 +161,10 @@ Updates the user's skill info.
 Request:
 ```ts
 interface SkillInfo {
-    knownLanguages: {
-        name: string;
-        level: 1 | 2 | 3;
-    }[];
-    algoDSComfort: number;
-    algoExp: boolean;
-    useGit: boolean;
-    doCodingChalls: boolean;
-    knownFw: {
-      name: string;
-      level: 1 | 2 | 3;
-    }[];
-    knownDB: {
-      name: string;
-      level: 1 | 2 | 3;
-    }[];
+    role: "FRONTEND" | "BACKEND" | "FULLSTACK";
+    roleLanguages: string[];
+    languagesToLearn: string[];
+    toolsToLearn: string[];
 }
 ```
 

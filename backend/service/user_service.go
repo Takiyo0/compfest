@@ -149,7 +149,7 @@ func (s *UserService) generateInterviewQuestions(user model.User) error {
 	}
 	mappedQuestions := make([]model.InterviewQuestion, 0)
 	for _, topic := range topics {
-		questions, err := s.llmService.CreateQuestions(topic, 1) // TODO: increase this when LLM is faster
+		questions, err := s.llmService.CreateQuestions(topic.Topic, 3) // TODO: increase this when LLM is faster
 		if err != nil {
 			return fmt.Errorf("failed to create questions for topic %s: %w", topic, err)
 		}
@@ -160,7 +160,9 @@ func (s *UserService) generateInterviewQuestions(user model.User) error {
 			}
 			mappedQuestions = append(mappedQuestions, model.InterviewQuestion{
 				UserId:        user.ID,
-				Topic:         topic,
+				Topic:         topic.Topic,
+				TopicType:     topic.Type,
+				TopicLanguage: topic.Language,
 				Content:       question.Content,
 				Choices_:      string(serializedChoices),
 				CorrectChoice: question.CorrectChoice,
@@ -218,53 +220,43 @@ func (s *UserService) UpdateSkillInfo(userId int64, skillInfo model.SkillInfo, s
 	return s.userRepository.SetSkillInfo(userId, skillInfo, setFilled)
 }
 
-func (s *UserService) GetInterviewQuestionTopics(user model.User) ([]string, error) {
+func uppercaseFirstLetterEveryWord(s string) string {
+	words := strings.Split(s, " ")
+	for i, w := range words {
+		words[i] = strings.ToUpper(w[:1]) + w[1:]
+	}
+	return strings.Join(words, " ")
+}
+
+func (s *UserService) GetInterviewQuestionTopics(user model.User) ([]model.InterviewQuestionTopic, error) {
 	skillInfo, err := user.SkillInfo()
 	if err != nil {
 		return nil, err
 	}
+	topics := make([]model.InterviewQuestionTopic, 0)
 
-	topics := make([]string, 0)
-
-	scaleFiveLevels := map[int]string{
-		1: "Newbie",
-		2: "Beginner",
-		3: "Intermediate",
-		4: "Advanced",
-		5: "Expert",
-	}
-	scaleThreeLevels := map[int]string{
-		1: "Beginner",
-		2: "Intermediate",
-		3: "Advanced",
+	for _, t := range skillInfo.RoleLanguages {
+		topics = append(topics, model.InterviewQuestionTopic{
+			Type:     model.InterviewQuestionTopicTypeRoleLanguage,
+			Language: uppercaseFirstLetterEveryWord(t),
+			Topic:    uppercaseFirstLetterEveryWord(t),
+		})
 	}
 
-	if skillInfo.KnownLanguages != nil {
-		for _, skill := range skillInfo.KnownLanguages {
-			topics = append(topics, fmt.Sprintf("Bahasa Pemrograman: %s (%s)", skill.Name, scaleThreeLevels[skill.Level]))
-		}
+	for _, t := range skillInfo.LanguagesToLearn {
+		topics = append(topics, model.InterviewQuestionTopic{
+			Type:     model.InterviewQuestionTopicTypeLanguage,
+			Language: uppercaseFirstLetterEveryWord(t),
+			Topic:    uppercaseFirstLetterEveryWord(t),
+		})
 	}
 
-	if skillInfo.AlgoDSComfort != nil && *skillInfo.AlgoDSComfort > 0 {
-		topics = append(topics, fmt.Sprintf("Algoritma & Struktur Data (%s)", scaleFiveLevels[*skillInfo.AlgoDSComfort]))
-	}
-
-	if skillInfo.AlgoExp != nil && *skillInfo.AlgoExp {
-		topics = append(topics, "Algoritma")
-	}
-
-	if skillInfo.UseGit != nil && *skillInfo.UseGit {
-		topics = append(topics, "Version Control System: Git")
-	}
-
-	if skillInfo.DoCodingChalls != nil && *skillInfo.DoCodingChalls {
-		topics = append(topics, "Coding Challenges / Competitive Programming")
-	}
-
-	if skillInfo.KnownDB != nil {
-		for _, skill := range skillInfo.KnownDB {
-			topics = append(topics, fmt.Sprintf("Database: %s (%s)", skill.Name, scaleThreeLevels[skill.Level]))
-		}
+	for _, t := range skillInfo.ToolsToLearn {
+		topics = append(topics, model.InterviewQuestionTopic{
+			Type:     model.InterviewQuestionTopicTypeTool,
+			Language: uppercaseFirstLetterEveryWord(t),
+			Topic:    uppercaseFirstLetterEveryWord(t),
+		})
 	}
 
 	return topics, nil
