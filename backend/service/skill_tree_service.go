@@ -44,27 +44,54 @@ func (s *SkillTreeService) calculateTopics(user model.User) ([]string, error) {
 	}
 
 	topics := make([]string, 0)
+	roleLanguagesTopics := make([]string, 0)
+	languagesToLearnTopics := make([]string, 0)
+	toolsToLearnTopics := make([]string, 0)
 
 	for _, iq := range interviewQuestions {
-		if iq.TopicType != model.InterviewQuestionTopicTypeLanguage {
-			continue
+		switch iq.TopicType {
+		case model.InterviewQuestionTopicTypeLanguage:
+			dupe := false
+			for _, topic := range languagesToLearnTopics {
+				if topic == iq.Topic {
+					dupe = true
+					break
+				}
+			}
+			if !dupe {
+				languagesToLearnTopics = append(languagesToLearnTopics, iq.Topic)
+			}
+			break
+		case model.InterviewQuestionTopicTypeRoleLanguage:
+			dupe := false
+			for _, topic := range roleLanguagesTopics {
+				if topic == iq.Topic {
+					dupe = true
+					break
+				}
+			}
+			if !dupe {
+				roleLanguagesTopics = append(roleLanguagesTopics, iq.Topic)
+			}
+			break
+		case model.InterviewQuestionTopicTypeTool:
+			dupe := false
+			for _, topic := range toolsToLearnTopics {
+				if topic == iq.Topic {
+					dupe = true
+					break
+				}
+			}
+			if !dupe {
+				toolsToLearnTopics = append(toolsToLearnTopics, iq.Topic)
+			}
+			break
 		}
-		topics = append(topics, iq.Topic)
 	}
 
-	for _, iq := range interviewQuestions {
-		if iq.TopicType != model.InterviewQuestionTopicTypeRoleLanguage {
-			continue
-		}
-		topics = append(topics, iq.Topic)
-	}
-
-	for _, iq := range interviewQuestions {
-		if iq.TopicType != model.InterviewQuestionTopicTypeTool {
-			continue
-		}
-		topics = append(topics, iq.Topic)
-	}
+	topics = append(topics, languagesToLearnTopics...)
+	topics = append(topics, roleLanguagesTopics...)
+	topics = append(topics, toolsToLearnTopics...)
 
 	return topics, nil
 }
