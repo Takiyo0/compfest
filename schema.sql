@@ -162,5 +162,8 @@ CREATE TABLE weeklyQuestionsAnswers (
     FOREIGN KEY (sessionId) REFERENCES weeklyQuestionsSessions(id)
 ) ENGINE = InnoDB;
 
+ALTER TABLE interviewQuestions ADD COLUMN topicType VARCHAR(255) NOT NULL;
+ALTER TABLE interviewQuestions ADD COLUMN topicLanguage VARCHAR(255) NOT NULL;
+
 -- END
 -- START: Initial data

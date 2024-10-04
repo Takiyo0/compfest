@@ -39,7 +39,7 @@ func (r *InterviewQuestionRepository) AnswerQuestion(id int64, answerChoice int)
 func (r *InterviewQuestionRepository) InsertQuestions(questions []model.InterviewQuestion, userId int64) error {
 	values := make([][]interface{}, 0)
 	for _, question := range questions {
-		values = append(values, []interface{}{userId, question.Topic, question.Content, question.Choices_, question.CorrectChoice, time.Now().Unix(), question.Explanation})
+		values = append(values, []interface{}{userId, question.Topic, question.TopicType, question.TopicLanguage, question.Content, question.Choices_, question.CorrectChoice, time.Now().Unix(), question.Explanation})
 	}
-	return database.BulkInsert(r.db, "interviewQuestions", []string{"userId", "topic", "content", "choices", "correctChoice", "createdAt", "explanation"}, values)
+	return database.BulkInsert(r.db, "interviewQuestions", []string{"userId", "topic", "topicType", "topicLanguage", "content", "choices", "correctChoice", "createdAt", "explanation"}, values)
 }

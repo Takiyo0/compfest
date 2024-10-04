@@ -59,7 +59,7 @@ func (r *UserRepository) SetSkillInfo(id int64, skillInfo model.SkillInfo, setFi
 }
 
 func (r *UserRepository) SubmitInterview(userId int64) error {
-	update, err := r.db.Exec("UPDATE users SET interviewQuestionStatus = ? WHERE id = ? AND interviewQuestionStatus = ? AND (SELECT COUNT(*) FROM interviewQuestions WHERE interviewQuestions.userId = ?) = (SELECT COUNT(*) FROM interviewQuestions WHERE interviewQuestions.userId = ? AND userAnswer IS NOT NULL)", model.InterviewQuestionStatusQuestionsFinished, userId, model.InterviewQuestionStatusInProgress, userId, userId)
+	update, err := r.db.Exec("UPDATE users SET interviewQuestionStatus = ? WHERE id = ? AND interviewQuestionStatus = ?", model.InterviewQuestionStatusQuestionsFinished, userId, model.InterviewQuestionStatusInProgress)
 	rowsAffected, _ := update.RowsAffected()
 	if rowsAffected == 0 {
 		return sql.ErrNoRows

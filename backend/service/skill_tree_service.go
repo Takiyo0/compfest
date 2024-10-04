@@ -9,7 +9,6 @@ import (
 	"github.com/takiyo0/compfest/backend/model"
 	"github.com/takiyo0/compfest/backend/module/random"
 	"github.com/takiyo0/compfest/backend/repository"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -44,31 +43,27 @@ func (s *SkillTreeService) calculateTopics(user model.User) ([]string, error) {
 		return nil, err
 	}
 
-	type topicScore struct {
-		Topic string
-		Score int
-	}
+	topics := make([]string, 0)
 
-	topicScores := make(map[string]int)
-	for _, question := range interviewQuestions {
-		if _, ok := topicScores[question.Topic]; !ok {
-			topicScores[question.Topic] = 0
+	for _, iq := range interviewQuestions {
+		if iq.TopicType != model.InterviewQuestionTopicTypeLanguage {
+			continue
 		}
-		topicScores[question.Topic] += 1
+		topics = append(topics, iq.Topic)
 	}
 
-	topicScoresSlice := make([]topicScore, 0, len(topicScores))
-	for topic, score := range topicScores {
-		topicScoresSlice = append(topicScoresSlice, topicScore{Topic: topic, Score: score})
+	for _, iq := range interviewQuestions {
+		if iq.TopicType != model.InterviewQuestionTopicTypeRoleLanguage {
+			continue
+		}
+		topics = append(topics, iq.Topic)
 	}
 
-	sort.Slice(topicScoresSlice, func(i, j int) bool {
-		return topicScoresSlice[i].Score < topicScoresSlice[j].Score
-	})
-
-	topics := make([]string, 0, len(topicScoresSlice))
-	for _, ts := range topicScoresSlice {
-		topics = append(topics, ts.Topic)
+	for _, iq := range interviewQuestions {
+		if iq.TopicType != model.InterviewQuestionTopicTypeTool {
+			continue
+		}
+		topics = append(topics, iq.Topic)
 	}
 
 	return topics, nil
