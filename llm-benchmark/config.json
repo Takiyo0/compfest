@@ -1,0 +1,4 @@
+{
+  "llama_server_url": "http://127.0.0.1:8011",
+  "dataset_url": "https://huggingface.co/datasets/akmalfairuz/indoqa/raw/main/data.json"
+}
