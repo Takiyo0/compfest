@@ -40,6 +40,7 @@ const toPrompt = (data) => {
                 question: data,
                 response: resp.data["content"]
             });
+            saveTempRes();
             console.log(`Question ${i + 1} done!`);
         }catch (e){
             console.log(e);
