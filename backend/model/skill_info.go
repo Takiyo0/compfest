@@ -6,8 +6,8 @@ type LeveledSkillInfo struct {
 }
 
 type SkillInfo struct {
-	Role             string   `json:"role" validate:"required,oneof=FRONTEND BACKEND"`
+	Role             string   `json:"role" validate:"required,oneof=FULLSTACK FRONTEND BACKEND"`
 	RoleLanguages    []string `json:"roleLanguages" validate:"required"`
 	LanguagesToLearn []string `json:"languagesToLearn" validate:"required"`
-	ToolsToLearn     []string `json:"toolsToLearn" validate:"required,oneof=GIT DOCKER PROMETHEUS"`
+	ToolsToLearn     []string `json:"toolsToLearn" validate:"required"`
 }
