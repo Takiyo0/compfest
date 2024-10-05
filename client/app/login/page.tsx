@@ -1,6 +1,4 @@
-﻿'use client'
-
-import {Manrope} from "next/font/google";
+﻿import {Manrope} from "next/font/google";
 import {ApiManager} from "@/app/managers/api";
 import LoginPage from "@/app/login/LoginPage";
 import CookieManager from "@/app/components/cookie";
