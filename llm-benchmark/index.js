@@ -35,10 +35,21 @@ const toPrompt = (data) => {
         const data = dataset[i];
         try {
             console.log(`Question ${i + 1} started...`);
-            const resp = await axios.post(llamaServerUrl, {prompt: toPrompt(data)});
+            // const resp = await axios.post(llamaServerUrl, {prompt: toPrompt(data), n_predict: 1024});
+            const resp = await axios.post("http://127.0.0.1:11434/api/generate", {
+                "model": "llama3.1",
+                "prompt": toPrompt(data),
+                "stream": false
+            });
+
+            const d = JSON.parse(resp.data);
+            console.log(d);
+            const parsedContent = d.response.substr(1, 1);
+            const isCorrect = data.correct_option === parsedContent.toLowerCase();
             tempRes.push({
                 question: data,
-                response: resp.data["content"]
+                isCorrect,
+                response: JSON.parse(resp.data)?.content
             });
             saveTempRes();
             console.log(`Question ${i + 1} done!`);
