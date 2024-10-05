@@ -93,5 +93,6 @@ type WeeklyQuestionsAnswers struct {
 	SessionId       int64  `db:"sessionId"`
 	TimeDone        *int64 `db:"timeDone"`
 	FirstAccessTime int64  `db:"firstAccessTime"`
+	FirstAnswerTime *int64 `db:"firstAnswerTime"`
 	CreatedAt       int64  `db:"createdAt"`
 }
