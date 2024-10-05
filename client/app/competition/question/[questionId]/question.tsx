@@ -180,6 +180,7 @@ export default function QuestionPage({userData, topic}: {
                                         <p className={"text-neutral-400 text-sm"}>State: {x.State} {x.State == "IN_PROGRESS" ? `Dimulai sejak ${Utils.convertMsToHHMMSS(timers.find(a => a.id == x.Id)?.ms || 0)} yang lalu` : ""}</p>
                                     </div>
                                     <p className={"ml-auto text-sm"}>Skor: {x.Score}pts</p>
+                                    {/*@ts-ignore*/}
                                     <Button color className={"ml-2"} variant={"bordered"} size={"sm"} onClick={() => {
                                         router.push(`/competition/question/${params.questionId}/${x.Id}/${topic.firstQuestionId}`)
                                     }}>
