@@ -68,7 +68,7 @@ func (c *ChallengeRepository) GetWeeklyChallengeTopicsByChallengeId(challengeId 
 
 func (c *ChallengeRepository) GetWeeklyChallengeLeaderboardFinishedSessionsByChallengeId(challengeId int64) ([]model.WeeklyQuestionsSessions, error) {
 	var sessions []model.WeeklyQuestionsSessions
-	err := c.db.Select(&sessions, "SELECT * FROM weeklyQuestionsSessions WHERE challengeId = ? AND state = 'SUCCESS' AND isLatest = true", challengeId)
+	err := c.db.Select(&sessions, "SELECT * FROM weeklyQuestionsSessions WHERE challengeId = ? AND state = 'FINISHED' AND attempt = 1", challengeId)
 	if len(sessions) == 0 {
 		return []model.WeeklyQuestionsSessions{}, nil
 	}
@@ -77,7 +77,7 @@ func (c *ChallengeRepository) GetWeeklyChallengeLeaderboardFinishedSessionsByCha
 
 func (c *ChallengeRepository) GetUserWeeklyChallengeLeaderboardFinishedSessionsByChallengeIdAndUserId(challengeId int64, userId int64) ([]model.WeeklyQuestionsSessions, error) {
 	var sessions []model.WeeklyQuestionsSessions
-	err := c.db.Select(&sessions, "SELECT * FROM weeklyQuestionsSessions WHERE challengeId = ? AND userId = ? AND state = 'SUCCESS' AND isLatest = true", challengeId, userId)
+	err := c.db.Select(&sessions, "SELECT * FROM weeklyQuestionsSessions WHERE challengeId = ? AND userId = ? AND state = 'SUCCESS' AND attempt = 1", challengeId, userId)
 	if len(sessions) == 0 {
 		return []model.WeeklyQuestionsSessions{}, nil
 	}
@@ -258,6 +258,25 @@ func (c *ChallengeRepository) GetTopicByTopicId(topicId int64) (*model.WeeklyQue
 	return &topic, err
 }
 
+func (c *ChallengeRepository) GetWeeklyQuestionIdsByTopicId(topicId int64) ([]int64, error) {
+	ids := make([]int64, 0)
+	err := c.db.Select(&ids, "SELECT id FROM weeklyQuestions WHERE topicId = ?", topicId)
+	return ids, err
+}
+
+func (c *ChallengeRepository) GetUserAnsweredQuestionBySessionIdAndQuestionId(sessionId int64, questionId int64) (*model.WeeklyQuestionsAnswers, error) {
+	var answer model.WeeklyQuestionsAnswers
+	err := c.db.Get(&answer, "SELECT answer FROM weeklyQuestionsAnswers WHERE questionId = ? AND sessionId = ?", questionId, sessionId)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &answer, nil
+}
+
 func (c *ChallengeRepository) GetTopicQuestionsByTopicId(topicId int64) ([]model.WeeklyQuestions, error) {
 	var questions []model.WeeklyQuestions
 	err := c.db.Select(&questions, "SELECT * FROM weeklyQuestions WHERE topicId = ?", topicId)
@@ -306,9 +325,9 @@ func (c *ChallengeRepository) GetSessionsByUserIdAndTopicId(userId int64, topicI
 	return sessions, nil
 }
 
-func (c *ChallengeRepository) GetQuestionSessionByUserId(userId int64, getLatest bool) (*model.WeeklyQuestionsSessions, error) {
+func (c *ChallengeRepository) GetQuestionSessionByUserId(userId int64, topicId int64, getLatest int) (*model.WeeklyQuestionsSessions, error) {
 	var session model.WeeklyQuestionsSessions
-	err := c.db.Get(&session, "SELECT * FROM weeklyQuestionsSessions WHERE userId = ? AND isLatest = ?", userId, getLatest)
+	err := c.db.Get(&session, "SELECT * FROM weeklyQuestionsSessions WHERE userId = ? AND questionId = ? AND isLatest = ?", userId, topicId, 1)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -320,6 +339,7 @@ func (c *ChallengeRepository) GetQuestionSessionByUserId(userId int64, getLatest
 
 func (c *ChallengeRepository) StartNewQuestionSession(userId int64, topicId int64, attempt int, groupId *int64) (*model.WeeklyQuestionsSessions, error) {
 	var session model.WeeklyQuestionsSessions
+	println("Making attempt on db ", attempt)
 	topic, err := c.GetTopicByTopicId(topicId)
 	if err != nil || topic == nil {
 		return nil, errors.New("parent topic is not found. unknown question")
@@ -353,8 +373,11 @@ func (c *ChallengeRepository) StartNewQuestionSession(userId int64, topicId int6
 	return &session, err
 }
 
-func (c *ChallengeRepository) BulkSetQuestionSessionNotLatestExceptAttemptByUserIdAndTopicId(userId int64, topicId int64, exceptAttempt int) error {
-	_, err := c.db.Exec("UPDATE weeklyQuestionsSessions SET isLatest = false WHERE userId = ? AND questionId = ? AND attempt != ?", userId, topicId, exceptAttempt)
+func (c *ChallengeRepository) BulkSetQuestionSessionNotLatestExceptAttemptByUserIdAndTopicId(userId int64, topicId int64, exceptId int64) error {
+	println("trying to delete user id ", userId)
+	println("trying to delete topic ", topicId)
+	println("trying to delete except ", exceptId)
+	_, err := c.db.Exec("UPDATE weeklyQuestionsSessions SET isLatest = 0 WHERE userId = ? AND questionId = ? AND id != ?", userId, topicId, exceptId)
 	return err
 }
 
@@ -382,17 +405,18 @@ func (c *ChallengeRepository) GetUserAnswerBySessionIdAndQuestionIdAndUserId(ses
 }
 
 func (c *ChallengeRepository) UpdateUserAnswerBySessionIdAndQuestionIdAndUserId(sessionId int64, questionId int64, userId int64, answer int) error {
+	println("session id ", sessionId)
+	println("question id ", questionId)
+	println("user id ", userId)
 	awa, err := c.GetUserAnswerBySessionIdAndQuestionIdAndUserId(sessionId, questionId, userId)
 	if err != nil {
 		return err
 	}
-
 	if awa != nil {
 		var err error
-		if awa.TimeDone != nil && *awa.TimeDone > 0 {
-			_, err = c.db.Exec("UPDATE weeklyQuestionsAnswers SET answer = ? WHERE id = ?", answer, awa.Id)
-		} else {
+		if awa.TimeDone == nil || *awa.TimeDone == 0 {
 			timeDone := time.Now().Unix() - awa.FirstAccessTime
+			println("updating answer to ", answer)
 			_, err = c.db.Exec("UPDATE weeklyQuestionsAnswers SET answer = ?, timeDone = ? WHERE id = ?", answer, timeDone, awa.Id)
 		}
 		if err != nil {
@@ -431,8 +455,70 @@ func (c *ChallengeRepository) GetWeeklyQuestionByTopicIdAndId(topicId int64, id 
 }
 
 func (c *ChallengeRepository) FinishQuestionSession(sessionId int64, userId int64) error {
-	// count the scores
-
-	_, err := c.db.Exec("UPDATE weeklyQuestionsSessions SET state = 'FINISHED', finishedAt = ? WHERE id = ? AND userId = ?", time.Now().Unix(), sessionId, userId)
+	score, err := c.CountScoring(sessionId)
+	if err != nil {
+		return err
+	}
+	_, err = c.db.Exec("UPDATE weeklyQuestionsSessions SET state = 'FINISHED', finishedAt = ?, score = ? WHERE id = ? AND userId = ?", time.Now().Unix(), score, sessionId, userId)
 	return err
+}
+
+func (c *ChallengeRepository) GetAnswersBySessionId(sessionId int64) ([]model.WeeklyQuestionsAnswers, error) {
+	answers := make([]model.WeeklyQuestionsAnswers, 0)
+	err := c.db.Select(&answers, "SELECT * FROM weeklyQuestionsAnswers WHERE sessionId = ?", sessionId)
+	return answers, err
+}
+
+func (c *ChallengeRepository) BulkGetQuestionsByQuestionIds(questionsIds []int64) ([]model.WeeklyQuestions, error) {
+	questions := make([]model.WeeklyQuestions, 0)
+
+	for _, question := range questionsIds {
+		var temp model.WeeklyQuestions
+		err := c.db.Get(&temp, "SELECT * FROM weeklyQuestions WHERE id = ?", question)
+		if err != nil {
+			return questions, err
+		}
+
+		questions = append(questions, temp)
+	}
+
+	return questions, nil
+}
+
+func (c *ChallengeRepository) CountScoring(sessionId int64) (int, error) {
+	answers, err := c.GetAnswersBySessionId(sessionId)
+	if err != nil {
+		return 0, err
+	}
+
+	questionIds := make([]int64, 0)
+	for _, answer := range answers {
+		questionIds = append(questionIds, answer.QuestionId)
+	}
+
+	questions, err := c.BulkGetQuestionsByQuestionIds(questionIds)
+	if err != nil {
+		return 0, err
+	}
+
+	score := 0
+	for i, answer := range answers {
+		if answer.TimeDone == nil || answer.Answer == nil {
+			continue
+		}
+		score += calculateScore(int64(questions[i].Point), 360, *answer.TimeDone, *answer.Answer == questions[i].CorrectChoice)
+	}
+
+	return score, nil
+}
+
+func calculateScore(basePoints, maxTime, timeTaken int64, answerCorrect bool) int {
+	if !answerCorrect {
+		return 0
+	}
+	if timeTaken > maxTime {
+		return int(basePoints)
+	}
+	score := float64(basePoints) * (1 + float64(maxTime-timeTaken)/float64(maxTime))
+	return int(score)
 }

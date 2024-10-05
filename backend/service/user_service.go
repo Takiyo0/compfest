@@ -149,7 +149,7 @@ func (s *UserService) generateInterviewQuestions(user model.User) error {
 	}
 	mappedQuestions := make([]model.InterviewQuestion, 0)
 	for _, topic := range topics {
-		questions, err := s.llmService.CreateQuestions(topic.Topic, 3) // TODO: increase this when LLM is faster
+		questions, err := s.llmService.CreateQuestions(topic.Topic, 2) // TODO: increase this when LLM is faster
 		if err != nil {
 			return fmt.Errorf("failed to create questions for topic %s: %w", topic, err)
 		}

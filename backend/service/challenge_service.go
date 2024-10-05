@@ -47,6 +47,7 @@ type LeaderboardUser struct {
 	ChallengeId int64
 	QuestionIds []int64
 	Score       int
+	Languages   map[string]int
 }
 
 type DetailedTopic struct {
@@ -244,27 +245,42 @@ func (c *ChallengeService) GetLeaderboard(challengeId int64, userId int64) ([]Le
 	}
 
 	leaderboard := make([]LeaderboardUser, 0)
+
 	for _, session := range sessions {
 		user, err := c.userService.FindUserById(session.UserId)
 		username := "Unknown Error"
 		if err == nil && user != nil {
 			username = user.Name
 		}
+
+		topic, err := c.challengeRepository.GetTopicByTopicId(session.QuestionId)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		userFound := false
 		for i, lbUser := range leaderboard {
 			if lbUser.Id == session.UserId {
-				leaderboard[i].Score += session.Score
 				leaderboard[i].QuestionIds = append(leaderboard[i].QuestionIds, session.QuestionId)
+
+				leaderboard[i].Languages[topic.Language]++
+				leaderboard[i].Score += session.Score
+				userFound = true
 				break
 			}
 		}
-		leaderboard = append(leaderboard, LeaderboardUser{
-			Id:          session.UserId,
-			Name:        username,
-			UserId:      session.UserId,
-			ChallengeId: challengeId,
-			QuestionIds: []int64{session.QuestionId},
-			Score:       session.Score,
-		})
+
+		if !userFound {
+			leaderboard = append(leaderboard, LeaderboardUser{
+				Id:          session.UserId,
+				Name:        username,
+				UserId:      session.UserId,
+				ChallengeId: challengeId,
+				QuestionIds: []int64{session.QuestionId},
+				Score:       session.Score,
+				Languages:   map[string]int{topic.Language: 1},
+			})
+		}
 	}
 
 	userPosition := 0
