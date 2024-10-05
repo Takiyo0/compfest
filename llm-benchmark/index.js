@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 axios.defaults.transformResponse = [];
 
-const config = JSON.parse(fs.readFileSync("config.json").toString());
+const config = require('./config.json');
 
 const llamaServerUrl = config["llama_server_url"];
 const datasetUrl = config["dataset_url"];
@@ -35,14 +35,14 @@ const toPrompt = (data) => {
         const data = dataset[i];
         try {
             console.log(`Question ${i + 1} started...`);
-            const resp = await axios.post(llamaServerUrl, toPrompt(data));
+            const resp = await axios.post(llamaServerUrl, {prompt: toPrompt(data)});
             tempRes.push({
                 question: data,
                 response: resp.data["content"]
             });
             saveTempRes();
             console.log(`Question ${i + 1} done!`);
-        }catch (e){
+        } catch (e) {
             console.log(e);
             console.log("Retrying in 5 seconds...");
             await new Promise(resolve => setTimeout(resolve, 5000));
