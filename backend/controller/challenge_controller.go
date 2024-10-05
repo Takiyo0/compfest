@@ -8,6 +8,7 @@ import (
 	"github.com/takiyo0/compfest/backend/service"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type ChallengeController struct {
@@ -493,6 +494,11 @@ func (c *ChallengeController) handleGetTopicChallenge(ctx echo.Context) error {
 		return err
 	}
 
+	var firstQuestionId *int64
+	if len(topicResult.Questions) != 0 {
+		firstQuestionId = &topicResult.Questions[0].Id
+	}
+
 	//     "Id": 1,
 	//    "Name": "React",
 	//    "Language": "JavaScript",
@@ -500,14 +506,15 @@ func (c *ChallengeController) handleGetTopicChallenge(ctx echo.Context) error {
 	//    "ChallengeId": 1,
 	//    "Description": "React adalah pustaka JavaScript untuk membangun antarmuka pengguna yang fleksibel dan mudah dipelajari.",
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"id":          topicResult.Id,
-		"name":        topicResult.Name,
-		"language":    topicResult.Language,
-		"difficulty":  topicResult.Difficulty,
-		"challengeId": topicResult.ChallengeId,
-		"description": topicResult.Description,
-		"sessions":    topicResult.Sessions,
-		"questions":   topicResult.Questions,
+		"id":              topicResult.Id,
+		"name":            topicResult.Name,
+		"language":        topicResult.Language,
+		"difficulty":      topicResult.Difficulty,
+		"challengeId":     topicResult.ChallengeId,
+		"description":     topicResult.Description,
+		"firstQuestionId": firstQuestionId,
+		"sessions":        topicResult.Sessions,
+		"totalQuestions":  len(topicResult.Questions),
 	})
 }
 
@@ -535,7 +542,7 @@ func (c *ChallengeController) handleStartNewSession(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "topic not found")
 	}
 
-	session, err := c.challengeRepository.GetQuestionSessionByUserId(sess.UserId, true)
+	session, err := c.challengeRepository.GetQuestionSessionByUserId(sess.UserId, id, 1)
 	if err != nil {
 		return err
 	}
@@ -543,11 +550,17 @@ func (c *ChallengeController) handleStartNewSession(ctx echo.Context) error {
 
 	if session == nil || session.State == model.QuestionSessionFinished {
 		groupId := reqType.GroupId
-		session, err = c.challengeRepository.StartNewQuestionSession(sess.UserId, id, 1, groupId)
+		nextAttempt := 1
+		if session != nil {
+			nextAttempt = session.Attempt + 1
+		}
+
+		println("making new attempt", nextAttempt)
+		session, err = c.challengeRepository.StartNewQuestionSession(sess.UserId, id, nextAttempt, groupId)
 		if err != nil {
 			return err
 		}
-		err = c.challengeRepository.BulkSetQuestionSessionNotLatestExceptAttemptByUserIdAndTopicId(sess.UserId, id, 1)
+		err = c.challengeRepository.BulkSetQuestionSessionNotLatestExceptAttemptByUserIdAndTopicId(sess.UserId, id, session.Id)
 		if err != nil {
 			return err
 		}
@@ -580,16 +593,12 @@ func (c *ChallengeController) handleGetQuestion(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "session not found")
 	}
 
-	if session.QuestionId != reqType.QuestionId {
+	if session.QuestionId != reqType.TopicId {
 		return echo.NewHTTPError(http.StatusForbidden, "This session is not for this question")
 	}
 
 	if session.UserId != sess.UserId {
 		return echo.NewHTTPError(http.StatusForbidden, "you are trying to modify another user's session")
-	}
-
-	if session.State != model.QuestionSessionInProgress {
-		return echo.NewHTTPError(http.StatusForbidden, "You can no longer submit answer on this session")
 	}
 
 	question, err := c.challengeRepository.GetWeeklyQuestionByTopicIdAndId(reqType.TopicId, reqType.QuestionId)
@@ -600,9 +609,17 @@ func (c *ChallengeController) handleGetQuestion(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "question not found")
 	}
 
+	if question.TopicId != reqType.TopicId {
+		return echo.NewHTTPError(http.StatusForbidden, "Mismatched question and it's topic")
+	}
+
 	var userAnswer *int = nil
+	var firstAccessTime *int64 = nil
+	var answerTime *int64 = nil
 	ua, err := c.challengeRepository.GetUserAnswerBySessionIdAndQuestionIdAndUserId(reqType.SessionId, reqType.QuestionId, sess.UserId)
 	if ua != nil {
+		firstAccessTime = &ua.FirstAccessTime
+		answerTime = ua.TimeDone
 		if ua.Answer != nil && *ua.Answer > 0 {
 			userAnswer = ua.Answer
 		}
@@ -612,11 +629,57 @@ func (c *ChallengeController) handleGetQuestion(ctx echo.Context) error {
 		return err
 	}
 
+	questionIds, err := c.challengeRepository.GetWeeklyQuestionIdsByTopicId(reqType.TopicId)
+	if err != nil {
+		return err
+	}
+
+	userAnswered := make([]int, 0)
+	questionWaiting := make([]int, 0)
+	for _, questionId := range questionIds {
+		answer, err := c.challengeRepository.GetUserAnsweredQuestionBySessionIdAndQuestionId(reqType.SessionId, questionId)
+		if err != nil {
+			return err
+		}
+		final := 0
+		if answer != nil && answer.Answer != nil && *(answer.Answer) > 0 {
+			final = 1
+		}
+		userAnswered = append(userAnswered, final)
+		state := 0 // not accessed
+		if answer != nil && final == 0 {
+			state = 1 // waiting
+		} else if answer != nil {
+			state = 2
+		}
+		questionWaiting = append(questionWaiting, state)
+	}
+
+	explanation := question.Explanation
+	correctAnswer := question.CorrectChoice
+
+	if session.State != model.QuestionSessionFinished {
+		explanation = ""
+		correctAnswer = -1
+	}
+
 	return ctx.JSON(http.StatusOK, map[string]any{
-		"content":    question.Content,
-		"choices":    question.Choices_,
-		"point":      question.Point,
-		"userAnswer": userAnswer,
+		"id":               question.Id,
+		"content":          question.Content,
+		"choices":          question.Choices_,
+		"point":            question.Point,
+		"userAnswer":       userAnswer,
+		"firstAccessTime":  firstAccessTime,
+		"answerTime":       answerTime,
+		"serverTime":       time.Now().Unix(),
+		"questionIds":      questionIds,
+		"userAnswered":     userAnswered,
+		"questionsWaiting": questionWaiting,
+		"isFinished":       session.State == model.QuestionSessionFinished,
+		"score":            session.Score,
+		"sessionFinished":  session.FinishedAt,
+		"explanation":      explanation,
+		"correctAnswer":    correctAnswer,
 	})
 
 }
@@ -625,11 +688,12 @@ func (c *ChallengeController) handleAnswerQuestion(ctx echo.Context) error {
 	sess := Sess(ctx)
 
 	var reqType struct {
-		Answer    int   `json:"answer"`
-		SessionId int64 `json:"sessionId"`
+		Answer     int   `json:"answer" validate:"required"`
+		SessionId  int64 `json:"sessionId" validate:"required"`
+		QuestionId int64 `param:"questionId" validate:"required"`
 	}
 
-	if err := ctx.Bind(&reqType); err != nil {
+	if err := BindAndValidate(ctx, &reqType); err != nil {
 		return err
 	}
 
@@ -658,7 +722,7 @@ func (c *ChallengeController) handleAnswerQuestion(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "You can no longer submit answer on this session")
 	}
 
-	err = c.challengeRepository.UpdateUserAnswerBySessionIdAndQuestionIdAndUserId(reqType.SessionId, id, sess.UserId, reqType.Answer)
+	err = c.challengeRepository.UpdateUserAnswerBySessionIdAndQuestionIdAndUserId(reqType.SessionId, reqType.QuestionId, sess.UserId, reqType.Answer)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusForbidden, "You cannot answer this question yet")
 	}
@@ -675,7 +739,7 @@ func (c *ChallengeController) handleFinish(ctx echo.Context) error {
 		Id        int64 `param:"id" validate:"required"`
 	}
 
-	if err := ctx.Bind(&reqType); err != nil {
+	if err := BindAndValidate(ctx, &reqType); err != nil {
 		return err
 	}
 
