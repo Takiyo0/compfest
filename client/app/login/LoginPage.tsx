@@ -11,7 +11,6 @@ const manrope = Manrope({subsets: ["latin"]});
 export default function LoginPage({data, statusCode}: { data: any, statusCode: number }) {
     return <main
         className={"w-screen h-screen " + manrope.className}>
-        {statusCode == 200 && <CookieManager type={"SET_OAUTH"} value={data.state}/>}
         <div
             className={"bg-[#00000052] w-[90vw] max-w-xl relative left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 p-8 rounded-3xl shadow-2xl drop-shadow-2xl"}>
             <LogoComponent viewBox={"0 0 35 28"} className={"w-28 h-28 mx-auto"}/>
