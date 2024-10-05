@@ -1,0 +1,1 @@
+[{"question":{"option_a":"25","option_b":"50","option_c":"75","option_d":"100","question":"Sebuah fungsi rekursif menghitung faktorial dari suatu bilangan bulat.  Jika input adalah 5, berapa banyak total pemanggilan fungsi yang akan dilakukan, termasuk pemanggilan awal?","correct_option":"b"},"isCorrect":false}]
