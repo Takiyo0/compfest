@@ -161,9 +161,9 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
     return <>
         <Header userInfo={userInfo} center={true}/>
         <main
-            className={"blue-palette w-screen h-dvh h-screen absolute flex flex-col pt-28 items-center overflow-x-hidden " + manrope.className + (width < 1024 ? " !pt-24" : "")}>
+            className={"blue-palette w-screen h-dvh h-screen absolute flex flex-col pt-28 items-center overflow-x-hidden " + manrope.className + (width < 1024 ? " pt-0" : "")}>
             <div
-                className={"flex-1 w-screen flex h-full pb-8 pl-5 pr-5 " + (width < 1024 ? `!pl-3 !pr-3 h-screen` : "")}>
+                className={"flex-1 w-screen flex h-full pb-8 pl-5 pr-5 " + (width < 1024 ? `!pl-3 !pr-3 h-full` : "")}>
 
                 <motion.div
                     className={"flex flex-col bg-[#5353534d] backdrop-blur-3xl w-80 max-w-80 rounded-3xl pt-6 p-3 box-border " + (width < 1024 ? `z-10 absolute rounded-bl-none rounded-tl-none` : "")}
@@ -227,18 +227,18 @@ export default function Chat({userInfo, baseTopics, baseMessages}: {
                 </motion.div>
 
                 <div
-                    className={"flex flex-col items-center justify-center bg-[#5353534d] ml-5 backdrop-blur-3xl w-full rounded-3xl p-7 box-border " + (width < 1024 ? "!ml-0 !p-2" : "")}
-                    style={width < 1024 ? {zoom: .8} : {}}>
+                    className={"flex flex-col items-center justify-center bg-[#5353534d] ml-5 backdrop-blur-3xl w-full rounded-3xl p-7 box-border min-w-0 " + (width < 1024 ? "!ml-0 !p-2" : "")}
+                    style={width < 1024 ? {zoom: .9} : {}}>
                     <div
                         className={"w-full h-12 bg-[#3d47a59c] rounded-2xl pl-3 pr-3 flex items-center " + (width < 1024 ? "ml-0 p-0" : "")}>
-                        <div className={"topic flex items-center"}>
+                        <div className={"topic flex items-center w-full"}>
                             <MdChat size={26} className={"mr-2"}/>
-                            <h2 className={"text-[1.1rem]"}>({topicData?.find(x => x.id == topicId)?.id || "-"}) {topicData?.find(x => x.id == topicId)?.title || "New Chat"}</h2>
-                        </div>
-                        <div className={"status text-[0.9rem] text-zinc-400 ml-auto flex items-center"}>
-                            <div
-                                className={`w-2 h-2 rounded-full ${isGenerating ? "bg-yellow-500" : "bg-green-500"} mr-1`}></div>
-                            {isGenerating ? "generating" : "idle"}
+                            <h2 className={"text-[1.1rem] truncate flex-1"}>({topicData?.find(x => x.id == topicId)?.id || "-"}) {topicData?.find(x => x.id == topicId)?.title || "New Chat"}</h2>
+                            <div className={"status text-[0.9rem] text-zinc-400 ml-auto flex items-center"}>
+                                <div
+                                    className={`w-2 h-2 rounded-full ${isGenerating ? "bg-yellow-500" : "bg-green-500"} mr-1`}></div>
+                                {isGenerating ? "generating" : "idle"}
+                            </div>
                         </div>
                     </div>
                     <div

@@ -11,14 +11,14 @@ import toast from "react-hot-toast";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import Header from "@/app/components/header";
 import {MdOutlineArrowBack, MdQuiz, MdReviews} from "react-icons/md";
-import { RiProgress3Fill } from "react-icons/ri";
-import {useRouter} from "next/navigation";
+import {RiProgress3Fill} from "react-icons/ri";
+import {useRouter, useSearchParams} from "next/navigation";
 import {motion, useCycle} from "framer-motion";
 import {useWindowSize} from "@react-hook/window-size";
 import {LogoComponent} from "@/app/assets/images/logo";
-import { IoMdCloudDone } from "react-icons/io";
+import {IoMdCloudDone} from "react-icons/io";
 import Footer from "@/app/components/footer";
-import { FcQuestions } from "react-icons/fc";
+import {FcQuestions} from "react-icons/fc";
 
 const manrope = Manrope({subsets: ["latin"]});
 
@@ -29,7 +29,27 @@ export default function Material({userData, skillTree}: {
     const [width, height] = useWindowSize();
     const router = useRouter();
     const [isOpen, cycleOpen] = useCycle(-300, 0);
-    const [selectedEntry, setSelectedEntry] = React.useState(0);
+    const searchParams = useSearchParams();
+
+    const getFirstIndex = () => {
+        if (searchParams.get("child")) {
+            let child;
+            try {
+                child = parseInt(searchParams.get("child") ?? "");
+            } catch (e) {
+                child = null;
+            }
+
+            const index = skillTree.entries.findIndex(x => x.id == child);
+
+            // remove from query
+            router.replace("/material/" + skillTree.id, undefined);
+            if (child && index != -1) {
+                return index;
+            }
+        }
+    }
+    const [selectedEntry, setSelectedEntry] = React.useState(getFirstIndex() ?? 0);
     const [contents, setContents] = React.useState<{
         entryId: number,
         content: string
@@ -40,6 +60,8 @@ export default function Material({userData, skillTree}: {
     const controller = React.useRef(new AbortController);
     const authorization = getCookie("Authorization");
     const interval = React.useRef<NodeJS.Timeout>();
+
+    const isFirst = React.useRef(3);
 
     React.useEffect(() => {
         if (interval.current) clearInterval(interval.current);
@@ -62,9 +84,9 @@ export default function Material({userData, skillTree}: {
         }, 3000);
     }, [queue]);
 
-    React.useEffect(() => {
-        console.log(contents);
-    }, [contents])
+    // React.useEffect(() => {
+    //     console.log(contents);
+    // }, [contents])
 
     React.useEffect(() => {
         async function getLoader() {
@@ -133,7 +155,7 @@ export default function Material({userData, skillTree}: {
                 <Button className={"w-full mt-2 mb-3"} color={"primary"}
                         onPress={() => router.push(`/ganbatte/${skillTree.id}${skillTree.finished ? "/archive" : ""}`)}
                         startContent={skillTree.finished ? <MdReviews size={25}/> : <FcQuestions color={"white"}
-                            size={25}/>}>{skillTree.finished ? "Review hasil" : "Kerjakan Latihan Soal"}</Button>
+                                                                                                 size={25}/>}>{skillTree.finished ? "Review hasil" : "Kerjakan Latihan Soal"}</Button>
                 <h1 className={"ml-2 text-xl font-semibold"}>Materi</h1>
                 <Tabs aria-label="Options" color="primary" isVertical={true} variant={"light"} className={"w-full"}
                       selectedKey={selectedEntry}
@@ -141,12 +163,19 @@ export default function Material({userData, skillTree}: {
                           tabList: width < 1024 ? "ye" : ""
                       }}
                       items={skillTree.entries.map(x => ({id: x.id, title: x.title}))}
-                      onSelectionChange={(d) => setSelectedEntry(d as number)}>
+                      onSelectionChange={(d) => {
+                          if (isFirst.current <= 0) {
+                              setSelectedEntry(d as number)
+                          }
+                          isFirst.current--;
+                      }}>
                     {(item: any) => {
                         const index = skillTree.entries.findIndex(x => x.id === item.id);
                         let state = <BiSolidLeaf size={20} className={"shrink-0"} color={"#ff5c5c"}/>
-                        if (contents.find(x => x.entryId == item.id)?.content != "") state = <IoMdCloudDone size={20} className={"shrink-0"} color={"#67ff5c"}/>
-                        else if (queue.find(x => x.entryId == item.id)) state = <RiProgress3Fill size={20} className={"shrink-0"} color={"#fffc5c"}/>
+                        if (contents.find(x => x.entryId == item.id)?.content != "") state =
+                            <IoMdCloudDone size={20} className={"shrink-0"} color={"#67ff5c"}/>
+                        else if (queue.find(x => x.entryId == item.id)) state =
+                            <RiProgress3Fill size={20} className={"shrink-0"} color={"#fffc5c"}/>
                         return <Tab
                             key={index}
 

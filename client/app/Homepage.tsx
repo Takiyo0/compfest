@@ -4,25 +4,18 @@ import {Manrope} from "next/font/google";
 import {IoChatbubbleEllipses, IoMenu} from "react-icons/io5";
 import '@xyflow/react/dist/style.css';
 import Tree from 'react-d3-tree';
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import Header from "@/app/components/header";
 import {TreeResponse, UserInfoResponse} from "@/app/managers/api";
 import {motion, useCycle} from "framer-motion"
-import {
-    Modal,
-    ModalContent,
-    ModalHeader,
-    ModalBody,
-    ModalFooter, useDisclosure
-} from "@nextui-org/modal";
-import {Button, MenuItem, Spinner} from "@nextui-org/react";
+import {Button} from "@nextui-org/react";
 import Footer from "@/app/components/footer";
 import {GiFamilyTree} from "react-icons/gi";
 import {PiQuestionMarkFill} from "react-icons/pi";
-import {MdOutlineExtensionOff} from "react-icons/md";
-import useQuestionQueue from "@/app/hooks/QuestionQueue";
-import {useRouter} from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 import {useWindowSize} from "@react-hook/window-size";
+import {IoIosTrophy} from "react-icons/io";
+import ButtonNavigation from "@/app/components/buttonNavigation";
 
 const manrope = Manrope({subsets: ["latin"]});
 
@@ -40,15 +33,42 @@ interface RawNodeDatum {
 
 
 function transformToD3Format(skillTree: TreeResponse['data']['skillTree'], rootId: number): RawNodeDatum {
+    function limitChildrenTo(node: RawNodeDatum, maxChildren: number) {
+        if (node.name != "Kuduga AI" && node.children && node.children.length > maxChildren) {
+            const previousLength = node.children.length;
+            node.children = node.children.slice(0, maxChildren - 1);
+            node.children.push({
+                name: "dan " + (previousLength - maxChildren) + " lainnya"
+            })
+        }
+
+        return node;
+    }
+
     function findNodeById(id: number): TreeResponse['data']['skillTree'][0] | undefined {
         return skillTree.find(node => node.id === id);
     }
 
     function buildNode(node: TreeResponse['data']['skillTree'][0]): RawNodeDatum {
+        // Map child IDs to their corresponding node structure
         const children = node.child.map(childId => {
             const childNode = findNodeById(childId);
             return childNode ? buildNode(childNode) : null;
         }).filter(Boolean) as RawNodeDatum[];
+
+        // Include the entries as individual child nodes
+        const entryChildren = node.entries.map(entry => ({
+            name: entry.title,
+            attributes: {
+                description: entry.description,
+                id: entry.id,
+                parentId: node.id
+            },
+            children: undefined
+        }));
+
+        // Add entries as children if any exist
+        const allChildren = [...children, ...entryChildren];
 
         return {
             name: node.name,
@@ -56,16 +76,85 @@ function transformToD3Format(skillTree: TreeResponse['data']['skillTree'], rootI
                 id: node.id,
                 isRoot: node.isRoot
             },
-            children: children.length > 0 ? children : undefined,
+            children: allChildren.length > 0 ? allChildren : undefined,
         };
     }
+
+    // Create a top-level root node for "Kuduga AI"
+    const kudugaRoot: RawNodeDatum = {
+        name: "Kuduga AI",
+        attributes: {},
+        children: []
+    };
 
     const rootNode = findNodeById(rootId);
     if (!rootNode) {
         throw new Error(`Root node with ID ${rootId} not found.`);
     }
 
-    return buildNode(rootNode);
+    const t = [{
+        n: "1",
+        children: [{
+            n: "2",
+            children: [{
+                n: "3",
+                children: [{
+                    n: "4",
+                    children: undefined
+                }, {
+                    n: "7",
+                    children: undefined
+                }, {
+                    n: "8",
+                    children: undefined
+                }]
+            }, {
+                n: "6",
+                children: undefined
+            }]
+        }, {
+            n: "5",
+            children: undefined
+        }]
+    }]
+
+    const languageNodes = [buildNode(rootNode)];
+    kudugaRoot.children = moveFirstIndexToTop(languageNodes).map(x => limitChildrenTo(x, 3));
+
+    return kudugaRoot;
+}
+
+function moveFirstIndexToTop(nodes: RawNodeDatum[]): RawNodeDatum[] {
+    const result: RawNodeDatum[] = [];
+
+    function moveFirstChildToFront(node: RawNodeDatum): RawNodeDatum {
+        if (node.children && node.children.length > 0) {
+            const firstChild = node.children[0];
+
+            // Only move the first child if it has children
+            if (firstChild.children && firstChild.children.length > 0) {
+                const otherChildren = node.children.slice(1);
+
+                const processedFirstChild = moveFirstChildToFront(firstChild);
+
+                result.push(processedFirstChild);
+
+                return {
+                    ...node,
+                    children: otherChildren.length > 0 ? otherChildren : undefined
+                };
+            }
+        }
+
+        return node;
+    }
+
+    nodes.forEach(node => {
+        const processedNode = moveFirstChildToFront(node);
+        result.push(processedNode);
+    });
+
+    return result;
 }
 
 export default function HomePage({data, userData}: {
@@ -76,7 +165,6 @@ export default function HomePage({data, userData}: {
     const d3TreeData = transformToD3Format(data, data.find(x => x.isRoot)?.id ?? 777622795);
     const [showTree, setShowTree] = useState(false);
     const [treeTranslate, setTreeTranslate] = useState({x: 0, y: 0});
-    const [selectedNode, setSelectedNode] = useState<number | undefined>(undefined);
 
     const [width] = useWindowSize();
     const [isOpen, toggleOpen] = useCycle(true, false);
@@ -94,9 +182,9 @@ export default function HomePage({data, userData}: {
     const treeContainer = useCallback((node: HTMLDivElement) => {
         if (node != null) {
             setTreeTranslate({
-                x: (node.getBoundingClientRect().width ?? 0) / 2,
-                y: (node.getBoundingClientRect().height ?? 0) / 2 - screen.height / 3,
-            })
+                x: (screen.width - (node.getBoundingClientRect().width ?? 0)) / 5,
+                y: (screen.height - (node.getBoundingClientRect().height ?? 0)) / 2,
+            });
         }
     }, [])
 
@@ -105,9 +193,11 @@ export default function HomePage({data, userData}: {
     }, [])
     if (!showTree) return <></>;
 
-    function openQuestion(id: number) {
+    function openQuestion(id: number, parentId?: number) {
         if (id == undefined) return;
-        router.push(`/material/${id}`);
+        if (parentId != undefined) {
+            router.push(`/material/${parentId}?child=${id}`);
+        } else router.push(`/material/${id}`);
     }
 
     return <>
@@ -156,16 +246,34 @@ export default function HomePage({data, userData}: {
                         opacity: 0
                     }
                 }}>
-                    <p>Navigation</p>
-                    <Button startContent={<GiFamilyTree size={20}/>} className={"w-full text-left mt-2"}
-                            color={"primary"}
-                            variant={"shadow"}>Skill Tree</Button>
-                    <Button startContent={<PiQuestionMarkFill size={20}/>} className={"w-full text-left mt-3"}
-                            color={"default"} onClick={() => router.push("/archive")}
-                            variant={"solid"}>Arsip Pertanyaan</Button>
-                    <Button startContent={<IoChatbubbleEllipses size={20}/>} className={"w-full text-left mt-3"}
-                            color={"default"} onClick={() => router.push("/chat")}
-                            variant={"solid"}>Chat</Button>
+                    <p>Navigasi</p>
+                    {[
+                        {
+                            name: "Skill Tree",
+                            isActive: true,
+                            redirectTo: "/",
+                            icon: <GiFamilyTree size={20}/>
+                        },
+                        {
+                            name: "Arsip Pertanyaan",
+                            isActive: false,
+                            redirectTo: "/archive",
+                            icon: <PiQuestionMarkFill size={20}/>
+                        },
+                        {
+                            name: "Kompetisi",
+                            isActive: false,
+                            redirectTo: "/competition",
+                            icon: <IoIosTrophy size={20}/>
+                        },
+                        {
+                            name: "Chat",
+                            isActive: false,
+                            redirectTo: "/chat",
+                            icon: <IoChatbubbleEllipses size={20}/>
+                        }].map((x, i) => (
+                        <ButtonNavigation key={i} name={x.name} active={x.isActive} redirectTo={x.redirectTo}
+                                          icon={x.icon}/>))}
                 </motion.div>
             </motion.nav>
             <div ref={treeContainer} id="treeWrapper"
@@ -173,22 +281,28 @@ export default function HomePage({data, userData}: {
                 <Tree data={d3TreeData}
                       rootNodeClassName="node__root"
                       branchNodeClassName="node__branch"
-                      orientation={"vertical"}
+                      pathFunc={"diagonal"}
+                      depthFactor={400}
+                      orientation={"horizontal"}
                       translate={treeTranslate}
+                      separation={{siblings: 0.3, nonSiblings: 0.4}}
+                      zoom={.7}
                       nodeSize={{
-                          x: 230,
+                          x: 400,
                           y: 180
                       }}
                       renderCustomNodeElement={n => {
                           const data = n.nodeDatum;
-                          const isTopRoot = data.name == "Your Skill Tree";
-                          return <foreignObject x={isTopRoot ? -100 : -13} y={isTopRoot ? -60 : -35} width={230}
-                                                height={80}>
+                          const isParent = data.children && data.children.length != 0;
+                          return <foreignObject x={isParent ? -110 : -13} y={isParent ? -65 : -20}
+                                                width={isParent ? 230 : 400}
+                                                height={isParent ? 80 : 40}>
                               <div
-                                  className={"w-full h-full flex items-center " + (isTopRoot ? "flex-col-reverse" : "")}>
+                                  className={"w-full h-full flex items-center " + (isParent ? "flex-col-reverse" : "")}>
                                   <div className={"grow-0 w-7 h-7 rounded-full bg-gray-500"}/>
-                                  <div onClick={x => openQuestion(data.attributes?.id as number)}
-                                       className={"ml-2 h-full w-[90%] bg-[#76b1e530] rounded-xl p-2 box-border hover:scale-95 active:scale-90 " + (isTopRoot ? "h-min mb-3 text-center bg-[#60eef36e]" : "")}>
+                                  <div
+                                      onClick={x => openQuestion(data.attributes?.id as number, !isParent ? (data.attributes?.parentId as number) : undefined)}
+                                      className={"ml-2 h-full w-[90%] bg-[#76b1e530] rounded-xl p-2 box-border hover:scale-95 active:scale-90 " + (isParent ? "h-min mb-3 text-center bg-[#60eef36e]" : "")}>
                                       <h1>{data.name}</h1>
                                   </div>
                               </div>

@@ -6,7 +6,11 @@
     "dev": "next dev -p 5465",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "VERSION=v1.2.2-prod && docker build -t registry.takiyo.us/takiyo/compfest/frontend:$VERSION . --no-cache --provenance false",
+    "docker:push": "VERSION=v1.2.2-prod && docker push registry.takiyo.us/takiyo/compfest/frontend:$VERSION",
+    "docker:run": "VERSION=v1.2.2-prod && docker run -it -p 6969:5465 registry.takiyo.us/takiyo/compfest/frontend:$VERSION",
+    "docker:deploy": "npm run docker:build && npm run docker:push"
   },
   "dependencies": {
     "@nextui-org/react": "^2.4.6",

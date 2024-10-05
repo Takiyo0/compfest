@@ -37,6 +37,13 @@ body {
     }
 }
 
+.fill-available {
+    width: 100%;
+    width: -moz-available;          /* WebKit-based browsers will ignore this. */
+    width: -webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
+    width: fill-available;
+}
+
 .header {
     background: radial-gradient(circle at 0 0, rgba(55, 51, 183, .8) 0%, rgba(55, 51, 183, .8) 10%, rgba(0, 15, 129, 0.5) 70%);
 }

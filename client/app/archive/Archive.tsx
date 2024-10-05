@@ -15,6 +15,8 @@ import {FaDotCircle, FaQuestion} from "react-icons/fa";
 import {FaEye} from "react-icons/fa6";
 import {IoChatbubbleEllipses} from "react-icons/io5";
 import {useWindowSize} from "@react-hook/window-size";
+import {IoIosTrophy} from "react-icons/io";
+import ButtonNavigation from "@/app/components/buttonNavigation";
 
 const manrope = Manrope({subsets: ["latin"]});
 
@@ -83,15 +85,33 @@ export default function Archive({userData, data}: {
                     }
                 }}>
                     <p>Navigation</p>
-                    <Button startContent={<GiFamilyTree size={20}/>} className={"w-full text-left mt-2"}
-                            color={"default"} onClick={() => router.push("/")}
-                            variant={"shadow"}>Skill Tree</Button>
-                    <Button startContent={<PiQuestionMarkFill size={20}/>} className={"w-full text-left mt-3"}
-                            color={"primary"}
-                            variant={"solid"}>Arsip Pertanyaan</Button>
-                    <Button startContent={<IoChatbubbleEllipses size={20}/>} className={"w-full text-left mt-3"}
-                            color={"default"} onClick={() => router.push("/chat")}
-                            variant={"solid"}>Chat</Button>
+                    {[
+                        {
+                            name: "Skill Tree",
+                            isActive: false,
+                            redirectTo: "/",
+                            icon: <GiFamilyTree size={20}/>
+                        },
+                        {
+                            name: "Arsip Pertanyaan",
+                            isActive: true,
+                            redirectTo: "/archive",
+                            icon: <PiQuestionMarkFill size={20}/>
+                        },
+                        {
+                            name: "Kompetisi",
+                            isActive: false,
+                            redirectTo: "/competition",
+                            icon: <IoIosTrophy size={20}/>
+                        },
+                        {
+                            name: "Chat",
+                            isActive: false,
+                            redirectTo: "/chat",
+                            icon: <IoChatbubbleEllipses size={20}/>
+                        }].map((x, i) => (
+                        <ButtonNavigation key={i} name={x.name} active={x.isActive} redirectTo={x.redirectTo}
+                                          icon={x.icon}/>))}
                 </motion.div>
             </motion.nav>
             <div

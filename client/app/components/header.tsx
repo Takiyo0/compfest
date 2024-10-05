@@ -26,7 +26,7 @@ export default function Header({userInfo, center = false}: { userInfo: any, cent
             style={{
                 ...{
                     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1), 0 20px 25px rgba(0, 0, 0, 0.1)"
-                }, ...width < 1024 ? {zoom: .9} : {}
+                }, ...width < 1024 ? {zoom: 1} : {}
             }}
         >
 

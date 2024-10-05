@@ -18,6 +18,7 @@ import {useWindowSize} from "@react-hook/window-size";
 import {useCycle} from "framer-motion";
 import {cookies} from "next/headers";
 import TetrisGame from "@/app/components/Tetris";
+import Footer from "@/app/components/footer";
 
 const manrope = Manrope({subsets: ["latin"]});
 export default function ChallengeInterview({userData, questions}: {
@@ -197,5 +198,6 @@ export default function ChallengeInterview({userData, questions}: {
                     </div>
                 </div>
             </main>}
+        <Footer/>
     </>
 }
