@@ -20,10 +20,45 @@ const config: Config = {
     darkMode: "class",
     plugins: [nextui({
         themes: {
-            "blue-palette": {
+            dark: {
                 extend: "dark", // <- inherit default values from dark theme
                 colors: {
                     background: "#0D001A",
+                    foreground: "#ffffff",
+                    primary: {
+                        50: "#2e2e65",
+                        100: "#37377a",
+                        200: "#40408f",
+                        300: "#4949a4",
+                        400: "#5252b9",
+                        500: "#4a4a98", // <- Base color
+                        600: "#5e5ea8",
+                        700: "#7373b8",
+                        800: "#8888c8",
+                        900: "#9d9dd8",
+                        DEFAULT: "#4a4a98", // <- Default primary color
+                        foreground: "#ffffff",
+                    },
+                    focus: "#5e5ea8", // <- Slightly lighter shade for focus
+                },
+                layout: {
+                    disabledOpacity: "0.3",
+                    radius: {
+                        small: "4px",
+                        medium: "6px",
+                        large: "8px",
+                    },
+                    borderWidth: {
+                        small: "1px",
+                        medium: "2px",
+                        large: "3px",
+                    },
+                },
+            },
+            "blue-palette": {
+                extend: "dark", // <- inherit default values from dark theme
+                colors: {
+                    background: "#0f0d33",
                     foreground: "#ffffff",
                     primary: {
                         50: "#2e2e65",
