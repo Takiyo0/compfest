@@ -154,6 +154,7 @@ CREATE TABLE weeklyQuestionsAnswers (
     questionId BIGINT NOT NULL,
     answer INT,
     firstAccessTime BIGINT NOT NULL,
+    firstAnswerTime BIGINT,
     timeDone BIGINT,
     sessionId BIGINT NOT NULL,
     createdAt BIGINT NOT NULL,
